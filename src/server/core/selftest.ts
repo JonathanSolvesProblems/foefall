@@ -73,7 +73,7 @@ export async function selfTest(): Promise<string> {
     }
   }
   // Judges must be able to open the demo post: report the community type and size on every run.
-  let community = 'community type unknown';
+  let community: string;
   try {
     const sub = await reddit.getCurrentSubreddit();
     community = `r/${sub.name} is ${sub.type} with ${sub.numberOfSubscribers} members`;
