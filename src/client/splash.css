@@ -1,0 +1,136 @@
+.splash {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+}
+
+.splash-inner {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px 16px;
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+.splash-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.splash-word {
+  font-size: 34px;
+  line-height: 1;
+}
+
+.splash-sub {
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.splash-mid {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+
+.splash-board {
+  height: 100%;
+  max-height: 260px;
+  aspect-ratio: 1;
+  padding: 0;
+  border: none;
+  background: none;
+  flex: none;
+}
+
+.splash-board svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.splash-board-empty {
+  width: 100%;
+  height: 100%;
+  border-radius: 12px;
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  font-size: 13px;
+  padding: 12px;
+}
+
+.splash-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.splash-day {
+  font-size: 22px;
+  color: var(--gold-hi);
+}
+
+.splash-feel {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--gold-lo);
+  color: var(--gold);
+  font-size: 13px;
+}
+
+.splash-rule {
+  margin: 8px 0;
+  font-size: 15px;
+}
+
+.splash-stats {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.splash-stats b {
+  color: var(--gold-hi);
+  font-family: var(--font-display);
+  font-size: 18px;
+}
+
+.splash-cta {
+  width: 100%;
+  min-height: 48px;
+}
+
+/* Narrow feed cards: stack the board above the text. */
+@media (max-width: 460px) {
+  .splash-word {
+    font-size: 28px;
+  }
+  .splash-mid {
+    gap: 10px;
+  }
+  .splash-board {
+    max-height: none;
+    height: auto;
+    width: 52%;
+  }
+  .splash-rule {
+    font-size: 14px;
+    margin: 6px 0;
+  }
+  .splash-day {
+    font-size: 19px;
+  }
+}

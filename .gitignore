@@ -1,0 +1,8 @@
+node_modules
+.DS_Store
+dist
+.env
+tmp/
+tools/shots/
+*.log
+PHASE0.md

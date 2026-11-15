@@ -1,0 +1,717 @@
+@import '@fontsource/cormorant-unicase/latin-500.css';
+@import '@fontsource/cormorant-unicase/latin-700.css';
+@import '@fontsource/alegreya-sans/latin-400.css';
+@import '@fontsource/alegreya-sans/latin-500.css';
+@import '@fontsource/alegreya-sans/latin-700.css';
+
+/* Orvandel's palette: night, moonlight and lamp gold, with ember for danger. */
+:root {
+  --night: #110c14;
+  --night-2: #19121e;
+  --night-3: #231a2a;
+  --panel: #1d1523;
+  --line: #3a2e44;
+  --gold: #d9b66b;
+  --gold-hi: #f6e1a8;
+  --gold-lo: #8d7240;
+  --moon: #ece4cf;
+  --ink: #efe8d8;
+  --muted: #a99fb5;
+  --dim: #6f6579;
+  --ember: #e0583f;
+  --ember-hi: #ff8a6a;
+  --ok: #7fd49a;
+  --font-display: 'Cormorant Unicase', 'Palatino Linotype', Georgia, serif;
+  --font-body: 'Alegreya Sans', 'Segoe UI', system-ui, sans-serif;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--night);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 1.35;
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* The night sky behind everything: a low violet haze and a scatter of stars, painted in CSS. */
+.sky {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(1px 1px at 12% 18%, #fff8 50%, transparent 51%),
+    radial-gradient(1px 1px at 33% 8%, #fff6 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 71% 14%, #fff7 50%, transparent 51%),
+    radial-gradient(1px 1px at 86% 31%, #fff5 50%, transparent 51%),
+    radial-gradient(1px 1px at 22% 44%, #fff4 50%, transparent 51%),
+    radial-gradient(1px 1px at 55% 27%, #fff5 50%, transparent 51%),
+    radial-gradient(1px 1px at 92% 62%, #fff3 50%, transparent 51%),
+    radial-gradient(1px 1px at 6% 72%, #fff3 50%, transparent 51%),
+    radial-gradient(120% 70% at 50% 0%, #2a1d36 0%, var(--night) 60%);
+  pointer-events: none;
+}
+
+.wordmark {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  background: linear-gradient(180deg, var(--gold-hi), var(--gold) 55%, var(--gold-lo));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.display {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.muted {
+  color: var(--muted);
+}
+
+/* Buttons: one gold primary, quiet secondaries. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--night-3);
+  color: var(--ink);
+  font-weight: 500;
+  transition:
+    transform 120ms ease,
+    background 160ms ease,
+    border-color 160ms ease,
+    box-shadow 200ms ease;
+}
+
+.btn:active {
+  transform: translateY(1px) scale(0.98);
+}
+
+.btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.btn.primary {
+  border-color: var(--gold-lo);
+  background: linear-gradient(180deg, #e7c77e, #c9a257);
+  color: #241a0c;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.06em;
+}
+
+.btn.primary.ready {
+  box-shadow:
+    0 0 0 2px #f6e1a855,
+    0 0 22px #f6c86a88;
+  animation: ready 1.6s ease-in-out infinite;
+}
+
+@keyframes ready {
+  50% {
+    box-shadow:
+      0 0 0 3px #f6e1a888,
+      0 0 30px #f6c86acc;
+  }
+}
+
+.btn.ghost {
+  background: transparent;
+}
+
+.icon-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--night-3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--gold);
+}
+
+/* --- Game layout ------------------------------------------------------------------------------------------------ */
+
+.game {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px 12px;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.topbar {
+  width: 100%;
+  margin-bottom: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.topbar .title {
+  flex: 1;
+  min-width: 0;
+}
+
+.topbar .title .wordmark {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.topbar .title .sub {
+  font-size: 13px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ways-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--night-3);
+  font-size: 13px;
+  color: var(--gold-hi);
+  white-space: nowrap;
+}
+
+.forecast {
+  width: 100%;
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  background: #0d0a10cc;
+  border: 1px solid var(--line);
+  font-size: 14px;
+  text-align: center;
+}
+
+.forecast .bad {
+  color: var(--ember-hi);
+}
+
+.forecast .good {
+  color: var(--ok);
+}
+
+.forecast.perfect {
+  border-color: var(--gold-lo);
+  color: var(--gold-hi);
+}
+
+.coach {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, #2e2212, #221a10);
+  border: 1px solid var(--gold-lo);
+  color: var(--gold-hi);
+  font-size: 15px;
+  text-align: center;
+}
+
+.board-wrap {
+  position: relative;
+  width: min(100%, calc(100dvh - 290px));
+  aspect-ratio: 1;
+  flex: none;
+}
+
+.board-wrap svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: manipulation;
+}
+
+.heroes {
+  width: 100%;
+  display: flex;
+  gap: 8px;
+}
+
+.hero-card {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--night-2);
+  text-align: left;
+  transition:
+    border-color 160ms,
+    background 160ms,
+    opacity 160ms;
+}
+
+.hero-card.selected {
+  border-color: var(--gold);
+  background: #2a2014;
+}
+
+.hero-card.done {
+  opacity: 0.55;
+}
+
+.hero-card .name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1.05;
+  color: var(--gold-hi);
+}
+
+.hero-card .ability {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.15;
+}
+
+.hero-card .badge {
+  width: 34px;
+  height: 34px;
+  flex: none;
+}
+
+.actions {
+  width: 100%;
+  margin-top: auto;
+  display: flex;
+  gap: 8px;
+}
+
+.actions .btn {
+  flex: 1;
+}
+
+.actions .btn.primary {
+  flex: 2;
+}
+
+/* --- Sheets (result and help) ----------------------------------------------------------------------------------- */
+
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: #07050acc;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: fade 200ms ease;
+}
+
+.sheet {
+  width: min(520px, 100%);
+  max-height: 92dvh;
+  overflow-y: auto;
+  padding: 18px 16px 16px;
+  border-radius: 18px 18px 0 0;
+  background: linear-gradient(180deg, #221829, #160f1b);
+  border: 1px solid var(--line);
+  border-bottom: none;
+  box-shadow: 0 -20px 60px #000a;
+  animation: rise 260ms cubic-bezier(0.2, 0.9, 0.3, 1.1);
+}
+
+@keyframes rise {
+  from {
+    transform: translateY(40px);
+    opacity: 0;
+  }
+}
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.sheet h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 28px;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.sheet h3 {
+  margin: 14px 0 6px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--gold);
+  letter-spacing: 0.05em;
+}
+
+.sheet .lede {
+  text-align: center;
+  color: var(--muted);
+  margin: 4px 0 0;
+}
+
+.sheet .row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.sheet .row .btn {
+  flex: 1 1 140px;
+  white-space: nowrap;
+}
+
+.sheet .btn.primary {
+  font-size: 16px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  margin: 12px 0 4px;
+}
+
+.stat {
+  text-align: center;
+}
+
+.stat b {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 26px;
+  color: var(--gold-hi);
+  line-height: 1;
+}
+
+.stat span {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.way-lines {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #0d0a10;
+  border: 1px solid var(--line);
+  list-style: none;
+}
+
+.way-lines li {
+  padding: 2px 0;
+}
+
+.codex {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.codex .slot {
+  flex: 1 1 120px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--night-2);
+  font-size: 13px;
+  min-width: 0;
+}
+
+.codex .slot.mine {
+  border-color: var(--gold-lo);
+}
+
+.codex .slot.locked {
+  border-style: dashed;
+  color: var(--dim);
+}
+
+.codex .slot .who {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--night-3);
+  border: 1px solid var(--line);
+  object-fit: cover;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  color: var(--gold);
+}
+
+.badge-first {
+  display: block;
+  width: fit-content;
+  margin: 10px auto 0;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #e7c77e, #c9a257);
+  color: #241a0c;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.nations {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.nation {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--night-2);
+  text-align: left;
+  font-size: 14px;
+}
+
+.nation .sigil {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #1a1208;
+  font-weight: 700;
+  flex: none;
+}
+
+.board-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.board-list li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 0;
+  border-bottom: 1px solid #2a2132;
+  font-size: 14px;
+}
+
+.board-list li .rank {
+  width: 20px;
+  color: var(--dim);
+  text-align: right;
+}
+
+.board-list li .nm {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.help-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+
+.help-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  background: var(--night-2);
+  border: 1px solid #2a2132;
+  font-size: 14px;
+}
+
+.help-item .t {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--gold-hi);
+}
+
+.credits {
+  margin-top: 14px;
+  font-size: 12px;
+  color: var(--dim);
+  text-align: center;
+}
+
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 20;
+  transform: translateX(-50%);
+  padding: 10px 16px;
+  border-radius: 10px;
+  background: #0d0a10;
+  border: 1px solid var(--gold-lo);
+  color: var(--gold-hi);
+  animation: fade 200ms ease;
+}
+
+.center-msg {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 24px;
+  text-align: center;
+}
+
+/* --- Board animation -------------------------------------------------------------------------------------------- */
+
+.token {
+  transition: transform 240ms cubic-bezier(0.3, 0.8, 0.3, 1.05);
+}
+
+.token.gone {
+  transition:
+    transform 240ms ease,
+    opacity 520ms ease 120ms;
+  opacity: 0;
+}
+
+.token .shape {
+  transition: transform 520ms ease 80ms;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.token.gone .shape {
+  transform: scale(0.2) rotate(40deg);
+}
+
+.token.selected .ring {
+  animation: pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    stroke-width: 7;
+  }
+}
+
+.strike-tile {
+  transition: opacity 200ms;
+}
+
+.striking .strike-tile {
+  animation: flash 700ms ease-out;
+}
+
+@keyframes flash {
+  0% {
+    opacity: 0.3;
+  }
+  25% {
+    opacity: 1;
+    filter: brightness(1.8);
+  }
+  100% {
+    opacity: 0.85;
+  }
+}
+
+.danger-ring {
+  animation: danger 1s ease-in-out infinite;
+}
+
+@keyframes danger {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.move-dot {
+  animation: fade 160ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .token,
+  .token.gone,
+  .token .shape {
+    transition: none;
+  }
+  .btn.primary.ready,
+  .danger-ring,
+  .token.selected .ring,
+  .striking .strike-tile {
+    animation: none;
+  }
+}

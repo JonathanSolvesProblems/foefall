@@ -1,0 +1,55 @@
+{
+  "private": true,
+  "name": "forewarned",
+  "version": "0.1.0",
+  "license": "BSD-3-Clause",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "check": "tsc --build && vitest run",
+    "deploy": "npm run check && devvit upload",
+    "dev": "devvit playtest",
+    "gen": "tsx tools/gen-season.ts",
+    "lint": "eslint \"src/**/*.{ts,tsx}\"",
+    "local": "vite --config tools/vite.local.config.ts",
+    "login": "devvit login",
+    "shots": "tsx tools/shoot.ts",
+    "test": "vitest run",
+    "test:types": "tsc --build"
+  },
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "dependencies": {
+    "@devvit/analytics": "^0.15.3",
+    "@devvit/start": "0.15.3",
+    "@devvit/web": "0.15.3",
+    "@fontsource/alegreya-sans": "^5.2.5",
+    "@fontsource/cormorant-unicase": "^5.2.5",
+    "@hono/node-server": "2.1.6",
+    "devvit": "0.15.3",
+    "hono": "4.13.17",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@tailwindcss/vite": "4.3.5",
+    "@types/node": "^24.13.3",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.3.0",
+    "eslint": "10.14.0",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "eslint-plugin-react-refresh": "0.5.7",
+    "globals": "17.14.0",
+    "playwright": "^1.56.1",
+    "prettier": "3.9.10",
+    "tailwindcss": "4.3.5",
+    "tsx": "^4.23.1",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.2",
+    "vite": "8.3.7",
+    "vitest": "^3.2.4"
+  }
+}

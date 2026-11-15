@@ -1,0 +1,65 @@
+{
+  "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
+  "name": "forewarned",
+  "marketingAssets": {
+    "icon": "assets/icon.png"
+  },
+  "post": {
+    "dir": "dist/client",
+    "entrypoints": {
+      "default": {
+        "entry": "splash.html",
+        "height": "tall"
+      },
+      "game": {
+        "entry": "game.html"
+      }
+    }
+  },
+  "server": {
+    "dir": "dist/server",
+    "entry": "index.cjs"
+  },
+  "permissions": {
+    "reddit": {
+      "enable": true,
+      "scope": "user"
+    },
+    "redis": true,
+    "journeys": true
+  },
+  "menu": {
+    "items": [
+      {
+        "label": "Forewarned: post today's trial",
+        "description": "Posts today's trial if it is not up yet",
+        "location": "subreddit",
+        "forUserType": "moderator",
+        "endpoint": "/internal/menu/post-today"
+      },
+      {
+        "label": "Forewarned: post a fresh copy of today's trial",
+        "description": "For testing: posts today's trial again",
+        "location": "subreddit",
+        "forUserType": "moderator",
+        "endpoint": "/internal/menu/post-fresh"
+      }
+    ]
+  },
+  "triggers": {
+    "onAppInstall": "/internal/triggers/on-app-install",
+    "onAppUpgrade": "/internal/triggers/on-app-upgrade"
+  },
+  "scheduler": {
+    "tasks": {
+      "daily-trial": {
+        "endpoint": "/internal/scheduler/daily-trial",
+        "cron": "1 0 * * *"
+      }
+    }
+  },
+  "scripts": {
+    "dev": "vite build --watch",
+    "build": "vite build"
+  }
+}
