@@ -297,10 +297,8 @@ function Play(props: {
                 <span className="ability" style={{ display: 'block' }}>
                   {fallen ? 'Fallen' : done ? 'Done' : CLASSES[h.cls].ability}
                 </span>
-                {/* Kept in place when the hero is done, so the card keeps its height and the board does not move. */}
-                <span className="blurb" style={done || fallen ? { visibility: 'hidden' } : undefined}>
-                  {CLASSES[h.cls].blurb}
-                </span>
+                {/* Kept when the hero is done (the card dims), so the card keeps its height and the board does not move. */}
+                <span className="blurb">{CLASSES[h.cls].blurb}</span>
               </span>
             </button>
           );

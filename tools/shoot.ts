@@ -42,8 +42,12 @@ async function run(viewport: { width: number; height: number }, tag: string) {
   const browser = await chromium.launch({ channel: process.env.PW_CHANNEL ?? 'msedge' });
   const page = await browser.newPage({ viewport, deviceScaleFactor: 2 });
   page.on('pageerror', (e) => errors.push(`${tag}: ${e.message}`));
+  // The console only says "404"; this names the resource.
+  page.on('response', (r) => {
+    if (r.status() >= 400) errors.push(`${tag} ${r.status()}: ${r.url()}`);
+  });
   page.on('console', (m) => {
-    if (m.type() === 'error') errors.push(`${tag} console: ${m.text()}`);
+    if (m.type() === 'error') errors.push(`${tag} console: ${m.text()} ${m.location().url}`);
   });
   const user = `p${tag}${Date.now() % 100000}`;
 
