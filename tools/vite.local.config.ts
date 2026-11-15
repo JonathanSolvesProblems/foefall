@@ -31,6 +31,9 @@ function mockApi(): Plugin {
         const today = gen.dayNumber(Date.now());
         const day = Number(ref.searchParams.get('day') ?? today);
         const who = user ? { userId: `t2_${user}`, username: user, avatar: undefined } : { userId: undefined, username: undefined, avatar: undefined };
+        const forgeId = Number(ref.searchParams.get('forge') ?? 0);
+        const forge = forgeId > 0 ? ((await game.loadForge(store, forgeId)) ?? undefined) : undefined;
+        const forgeMod = (await server.ssrLoadModule(resolve('src/shared/forge.ts'))) as typeof import('../src/shared/forge');
         let body: Record<string, unknown> = {};
         if (req.method === 'POST') {
           const chunks: Buffer[] = [];
@@ -51,19 +54,27 @@ function mockApi(): Plugin {
         if (path.startsWith('/api/telemetry/')) return send(200, { receipt: { status: 'LOCAL', message: 'local' } });
         if (path === '/api/init') {
           if (ref.searchParams.get('new') === '1' && who.userId) await store.hSet(`fw:u:${who.userId}`, { seen: '0' });
-          return send(200, await game.loadInit(store, season, { day, today, who, subreddit: 'forewarned_dev' }));
+          return send(200, await game.loadInit(store, season, { day, today, who, forge, subreddit: 'forewarned_dev' }));
         }
         if (path === '/api/attempt') {
-          const r = await game.recordAttempt(store, season, { day, today, who, actions: body.actions as never, nowMs: Date.now() });
+          const r = await game.recordAttempt(store, season, { day, today, who, forge, actions: body.actions as never, nowMs: Date.now() });
           return send(r.type === 'error' ? 400 : 200, r);
         }
         if (path === '/api/nation' && who.userId) {
           await game.setNation(store, who.userId, body.nation as never);
-          return send(200, await game.loadInit(store, season, { day, today, who, subreddit: 'forewarned_dev' }));
+          return send(200, await game.loadInit(store, season, { day, today, who, forge, subreddit: 'forewarned_dev' }));
         }
         if (path === '/api/seen' && who.userId) {
           await game.markSeen(store, who.userId);
           return send(200, { type: 'ok', message: 'seen' });
+        }
+        if (path === '/api/forge') {
+          if (!who.userId || !who.username) return send(401, { type: 'error', message: 'Log in to forge a trial.' });
+          const v = forgeMod.verifyForge(body.puzzle, body.proof);
+          if ('error' in v) return send(400, { type: 'error', message: v.error });
+          if (!v.check.ok) return send(400, { type: 'error', message: v.check.reason });
+          const id = await game.saveForge(store, { title: forgeMod.cleanTitle(body.title), author: who.username, puzzle: v.puzzle, wayKeys: v.check.wayKeys });
+          return send(200, { type: 'forge', id, postId: `t3_local${id}`, url: `/splash.html?user=${user}&forge=${id}` });
         }
         if (path === '/api/chalk') return send(200, { type: 'ok', message: 'Chalk mark left in the comments.' });
         if (path === '/api/subscribe') return send(200, { type: 'ok', message: 'Joined r/forewarned_dev.' });

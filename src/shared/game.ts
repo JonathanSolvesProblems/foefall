@@ -17,7 +17,13 @@ export type KV = {
   zAdd(key: string, ...members: { member: string; score: number }[]): Promise<unknown>;
   zRange(key: string, start: number, stop: number, options?: { by: 'rank' }): Promise<{ member: string; score: number }[]>;
   expire(key: string, seconds: number): Promise<unknown>;
+  get(key: string): Promise<string | undefined>;
+  set(key: string, value: string): Promise<unknown>;
+  incrBy(key: string, by: number): Promise<number>;
 };
+
+/** A trial a redditor built and posted. Its play data lives under the pseudo day -id, so it never touches streaks. */
+export type ForgedTrial = { id: number; title: string; author: string; puzzle: Puzzle; wayKeys: string[] };
 
 /**
  * Devvit Rules ask apps to remove a deleted account's data, and recommend deleting stored user data within 30 days.
@@ -132,26 +138,34 @@ async function loadCommunity(kv: KV, s: SeasonDay, myWays: string[]): Promise<Co
 export async function loadInit(
   kv: KV,
   season: readonly SeasonDay[],
-  opts: { day: number; today: number; who: Who; subreddit: string }
+  opts: { day: number; today: number; who: Who; subreddit: string; forge?: ForgedTrial | undefined }
 ): Promise<InitResponse> {
-  const s = trialFor(season, opts.day);
-  const me = await loadMe(kv, opts.day, opts.today, opts.who);
-  const community = await loadCommunity(kv, { ...s, day: opts.day }, me.ways);
+  const { s, day } = resolveTrial(season, opts.day, opts.forge);
+  const me = await loadMe(kv, day, opts.today, opts.who);
+  const community = await loadCommunity(kv, { ...s, day }, me.ways);
   const tier = TIERS[s.tier];
+  const f = opts.forge;
   return {
     type: 'init',
-    day: opts.day,
+    day,
     date: s.date,
     tier: s.tier,
-    moon: tier.moon,
-    feel: tier.feel,
-    isToday: opts.day === opts.today,
+    moon: f ? 'Forged trial' : tier.moon,
+    feel: f ? `${f.wayKeys.length} ${f.wayKeys.length === 1 ? 'way' : 'ways'}` : tier.feel,
+    isToday: !f && day === opts.today,
     today: opts.today,
     subreddit: opts.subreddit,
     puzzle: s.puzzle,
     me,
     community,
+    forge: f ? { id: f.id, title: f.title, author: f.author } : null,
   };
+}
+
+function resolveTrial(season: readonly SeasonDay[], day: number, forge?: ForgedTrial): { s: SeasonDay; day: number } {
+  if (!forge) return { s: trialFor(season, day), day };
+  const pseudo = -forge.id;
+  return { s: { day: pseudo, date: '', tier: 'quarter', puzzle: forge.puzzle, wayKeys: forge.wayKeys, winRatio: 0 }, day: pseudo };
 }
 
 export type AttemptResult = AttemptResponse | { type: 'error'; message: string };
@@ -160,9 +174,11 @@ export type AttemptResult = AttemptResponse | { type: 'error'; message: string }
 export async function recordAttempt(
   kv: KV,
   season: readonly SeasonDay[],
-  opts: { day: number; today: number; who: Who; actions: Action[]; nowMs: number }
+  opts: { day: number; today: number; who: Who; actions: Action[]; nowMs: number; forge?: ForgedTrial | undefined }
 ): Promise<AttemptResult> {
-  const s = trialFor(season, opts.day);
+  const resolved = resolveTrial(season, opts.day, opts.forge);
+  const s = resolved.s;
+  opts = { ...opts, day: resolved.day };
   if (!Array.isArray(opts.actions) || opts.actions.length > s.puzzle.heroes.length) {
     return { type: 'error', message: 'That turn has more actions than heroes.' };
   }
@@ -237,6 +253,34 @@ export async function markSeen(kv: KV, userId: string): Promise<void> {
   await kv.expire(K.user(userId), RETENTION_SECONDS);
 }
 
+const FK = {
+  seq: 'fw:forge:seq',
+  data: (id: number) => `fw:forge:${id}`,
+  author: (id: number) => `fw:forge:${id}:author`,
+};
+
+/** Store a forged trial and return its id. The author's name expires with other user data; the board stays. */
+export async function saveForge(kv: KV, f: Omit<ForgedTrial, 'id'>): Promise<number> {
+  const id = await kv.incrBy(FK.seq, 1);
+  await kv.set(FK.data(id), JSON.stringify({ title: f.title, puzzle: f.puzzle, wayKeys: f.wayKeys }));
+  await kv.set(FK.author(id), f.author);
+  await kv.expire(FK.author(id), RETENTION_SECONDS);
+  return id;
+}
+
+export async function loadForge(kv: KV, id: number): Promise<ForgedTrial | null> {
+  const raw = await kv.get(FK.data(id));
+  if (!raw) return null;
+  try {
+    const v = JSON.parse(raw) as { title?: string; puzzle?: Puzzle; wayKeys?: string[] };
+    if (!v.puzzle || !Array.isArray(v.wayKeys)) return null;
+    const author = (await kv.get(FK.author(id))) ?? 'a redditor';
+    return { id, title: v.title ?? '', author, puzzle: { ...v.puzzle, id: `f${id}` }, wayKeys: v.wayKeys };
+  } catch {
+    return null;
+  }
+}
+
 /** The user flair text: nation sigil and name, then the streak if there is one. Reddit caps flair at 64 characters. */
 export function flairText(me: Me, sigil: string, short: string): string {
   const streak = me.streak > 0 ? ` · ${me.streak}-day streak` : '';
@@ -248,6 +292,7 @@ export function memoryKV(): KV & { ttl: Map<string, number> } {
   const h = new Map<string, Map<string, string>>();
   const z = new Map<string, Map<string, number>>();
   const ttl = new Map<string, number>();
+  const strs = new Map<string, string>();
   const hash = (k: string) => {
     let m = h.get(k);
     if (!m) h.set(k, (m = new Map()));
@@ -257,6 +302,16 @@ export function memoryKV(): KV & { ttl: Map<string, number> } {
     ttl,
     expire: async (k, seconds) => {
       ttl.set(k, seconds);
+    },
+    get: async (k) => strs.get(k),
+    set: async (k, v) => {
+      strs.set(k, v);
+      return 'OK';
+    },
+    incrBy: async (k, by) => {
+      const n = (Number(strs.get(k)) || 0) + by;
+      strs.set(k, String(n));
+      return n;
     },
     hGet: async (k, f) => h.get(k)?.get(f),
     hGetAll: async (k) => Object.fromEntries(h.get(k) ?? []),

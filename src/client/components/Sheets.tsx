@@ -103,7 +103,7 @@ function lossTitle(o: Outcome): string {
 }
 
 export type ResultProps = {
-  mode: 'warmup' | 'daily';
+  mode: 'warmup' | 'daily' | 'proof';
   puzzle: Puzzle;
   outcome: Outcome;
   server: AttemptResponse | null;
@@ -115,10 +115,88 @@ export type ResultProps = {
   onNation: (n: Nation) => void;
   onChalk: () => void;
   onJoin: () => void;
+  onForge?: (() => void) | undefined;
+  onPublish?: ((title: string) => Promise<void>) | undefined;
+  onBackToForge?: (() => void) | undefined;
+  proofWays?: number | undefined;
 };
+
+/** After clearing your own forged trial: name it and post it, or go back and change it. */
+function ProofSheet(p: ResultProps) {
+  const [title, setTitle] = useState('');
+  const [posting, setPosting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const loggedIn = !!p.data?.me.username;
+  const post = async () => {
+    if (!p.onPublish) return;
+    setPosting(true);
+    setError(null);
+    try {
+      await p.onPublish(title);
+    } catch (e) {
+      setError((e as Error).message);
+      setPosting(false);
+    }
+  };
+  if (!p.outcome.win) {
+    return (
+      <div className="sheet-backdrop">
+        <div className="sheet" role="dialog" aria-label="Result">
+          <h2>{lossTitle(p.outcome)}</h2>
+          <p className="lede">Your own trial bested you. Adjust your moves, or go back and change the board.</p>
+          <div className="row" style={{ marginTop: 16 }}>
+            <button className="btn primary" onClick={p.onAdjust}>
+              Adjust moves
+            </button>
+            <button className="btn" onClick={p.onBackToForge}>
+              Back to the forge
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  const ways = p.proofWays ?? 1;
+  return (
+    <div className="sheet-backdrop">
+      <div className="sheet" role="dialog" aria-label="Post your trial">
+        <h2 className="wordmark">Proven</h2>
+        <p className="lede">
+          {ways === 1
+            ? 'You cleared it, and there is exactly one way through. Post it and see who else finds it.'
+            : `You cleared it, and it can be won ${ways} ways. Post it and the subreddit will hunt for every one.`}
+        </p>
+        {loggedIn ? (
+          <>
+            <label className="field">
+              <span>Name your trial (optional)</span>
+              <input value={title} maxLength={40} placeholder="The Lantern Gate" onChange={(e) => setTitle(e.target.value)} />
+            </label>
+            {error && <p className="error-line">{error}</p>}
+            <div className="row" style={{ marginTop: 12 }}>
+              <button className="btn primary" disabled={posting} onClick={post}>
+                {posting ? 'Posting…' : 'Post it'}
+              </button>
+              <button className="btn" disabled={posting} onClick={p.onBackToForge}>
+                Back to the forge
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="row" style={{ marginTop: 12 }}>
+            <button className="btn primary" onClick={() => showLoginPrompt()}>
+              Log in to post it
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
 
 export function ResultSheet(p: ResultProps) {
   const { outcome } = p;
+  if (p.mode === 'proof') return <ProofSheet {...p} />;
   if (p.mode === 'warmup') {
     return (
       <div className="sheet-backdrop">
@@ -267,6 +345,19 @@ export function ResultSheet(p: ResultProps) {
         )}
         {p.server?.saved && me && !me.nation && (
           <NationPicker onPick={p.onNation} busy={p.busy} />
+        )}
+        {p.onForge && (
+          <>
+            <h3>Make one for the subreddit</h3>
+            <p className="muted" style={{ margin: '0 0 8px', fontSize: 14 }}>
+              Build your own trial. Clear it to prove it can be won, then post it for everyone to hunt.
+            </p>
+            <div className="row">
+              <button className="btn" onClick={p.onForge}>
+                Forge a trial
+              </button>
+            </div>
+          </>
         )}
         {community && community.board.length > 0 && (
           <>

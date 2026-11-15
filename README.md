@@ -15,7 +15,9 @@ Requires Node 24 or newer and a Reddit account with [Devvit](https://developers.
 ```bash
 npm install
 npm test              # rules, solver, every scheduled trial, and the game state
-npm run local         # local preview at http://localhost:5199/splash.html?user=you (mock Reddit, real game logic)
+npm run local         # local preview at http://127.0.0.1:5199/splash.html?user=you (mock Reddit, real game logic)
+npx tsx tools/device-check.ts   # touch play at three phone sizes plus a logged-out player (needs npm run local)
+npx tsx tools/forge-check.ts    # build, prove, post and play a forged trial (needs npm run local)
 npx devvit login
 npm run dev           # devvit playtest in your test subreddit
 npm run deploy        # type-check, test, devvit upload
@@ -55,6 +57,7 @@ First-time players get a one-move warm-up with hints before the day's trial.
 
 ## What makes it a Reddit game
 
+- **Forge a trial.** After a clear, any redditor can build their own trial: place monsters (tap again to turn them), rock, chasms, lamps and up to three heroes, and the forecast shows every strike as you build. The solver checks it can be won and counts its ways. Then the maker has to clear it themselves before it can be posted, so no impossible trial ever reaches the feed. It goes up as its own post, with its own hunt for every way and its own first clears. Three forges per player per day.
 - **The hunt.** Each trial has a known number of ways to win. The post shows how many the subreddit has found, and each found way carries the name and avatar of the first redditor who found it. Unfound ways stay locked.
 - **Chalk marks.** After a clear, one button leaves your result as a comment in the day's thread (try count, ways found, streak, nation). The way itself is never spelled out, so the thread stays spoiler-free.
 - **Nations and flair.** Pick one of Orvandel's four nations after your first clear. Your nation and streak become your user flair, and every clear adds to your nation's tally for the day.
@@ -86,7 +89,8 @@ On a test subreddit (name ending in `_dev`), every upload runs a self-check on R
 | Path | What it is |
 |---|---|
 | `src/shared/engine/` | Rules, solver, generator, seeded RNG |
-| `src/shared/game.ts` | Tries, ways, first finders, streaks, nations, leaderboard, over a small key-value interface |
+| `src/shared/game.ts` | Tries, ways, first finders, streaks, nations, leaderboard, forged trials, over a small key-value interface |
+| `src/shared/forge.ts` | Validation for forged trials: limits, the maker's proof, and the solver check |
 | `src/server/` | Devvit Web server (Hono): API, Journeys endpoints, scheduler, menu, install trigger |
 | `src/client/` | The splash (inline in the feed) and the game (expanded), React and SVG |
 | `tools/` | Season generator, calibration, local preview, screenshot harness, icon renderer |

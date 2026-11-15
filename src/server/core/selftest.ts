@@ -3,7 +3,8 @@
 // Devvit Redis, and logs one line: "[selftest] ok ..." or "[selftest] FAIL ...". Scratch keys expire within the hour.
 import { context, reddit, redis } from '@devvit/web/server';
 import { solve } from '../../shared/engine/solver';
-import { loadInit, recordAttempt, trialFor } from '../../shared/game';
+import { verifyForge } from '../../shared/forge';
+import { loadForge, loadInit, recordAttempt, saveForge, trialFor } from '../../shared/game';
 import { kv, season, today } from './context';
 
 
@@ -32,6 +33,35 @@ export async function selfTest(): Promise<string> {
   const keys = ['stats', 'ways', 'waycount', 'nations', 'board', 'boardinfo'].map((k) => `fw:d${scratch}:${k}`);
   keys.push(`fw:d${scratch}:u:${who.userId}`, `fw:u:${who.userId}`);
   await Promise.all(keys.map((k) => redis.expire(k, 3600)));
+  // Forging, minus the post: verify a small board with its proof, save it, load it back, and win it as a player.
+  const board = {
+    rows: ['......', '......', '......', '......', '......', '......'],
+    heroes: [{ cls: 'vanguard', x: 0, y: 4 }],
+    enemies: [
+      { mob: 'wolf', x: 1, y: 2, dir: 'E', hp: 1 },
+      { mob: 'boar', x: 3, y: 2, dir: 'S', hp: 1 },
+    ],
+    lamps: [],
+  };
+  const proof = [{ hero: 'h1', to: [0, 2] as const, target: [1, 2] as const }];
+  const v = verifyForge(board, proof);
+  if ('error' in v || !v.check.ok) {
+    problems.push(`forge verify failed: ${'error' in v ? v.error : 'check'}`);
+  } else {
+    const fid = await saveForge(kv, { title: 'selftest', author: who.username, puzzle: v.puzzle, wayKeys: v.check.wayKeys });
+    const forge = await loadForge(kv, fid);
+    if (!forge) problems.push('forge did not load back');
+    else {
+      const lastBefore = await redis.hGet(`fw:u:${who.userId}`, 'last');
+      const fr = await recordAttempt(kv, season, { day: -fid, today: day, who, nowMs: Date.now(), actions: proof, forge });
+      const lastAfter = await redis.hGet(`fw:u:${who.userId}`, 'last');
+      if (fr.type !== 'attempt' || !fr.win) problems.push('forged trial could not be won');
+      else if (lastBefore !== lastAfter) problems.push('a forged trial moved the streak');
+    }
+    const fkeys = [`fw:forge:${fid}`, `fw:forge:${fid}:author`, ...['stats', 'ways', 'waycount', 'nations', 'board', 'boardinfo'].map((k) => `fw:d-${fid}:${k}`), `fw:d-${fid}:u:${who.userId}`];
+    await Promise.all(fkeys.map((k) => redis.expire(k, 3600)));
+  }
+
   const postId = await redis.hGet('fw:dayposts', String(day));
   let post = 'no post recorded for today';
   if (postId && postId !== 'pending') {
@@ -45,5 +75,5 @@ export async function selfTest(): Promise<string> {
   const ms = Date.now() - t0;
   return problems.length
     ? `[selftest] FAIL day ${day}: ${problems.join('; ')} (${ms} ms)`
-    : `[selftest] ok day ${day} (${s.tier}): won way ${r.wayKey} on scratch day, ${res.ways.length} ways, ${post} (${ms} ms)`;
+    : `[selftest] ok day ${day} (${s.tier}): won way ${r.wayKey} on scratch day, ${res.ways.length} ways, forge round trip won, ${post} (${ms} ms)`;
 }

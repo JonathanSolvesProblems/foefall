@@ -11,6 +11,8 @@ export function showToast(text: string): void {
 
 export function navigateTo(url: string): void {
   console.log('[navigate]', url);
+  // In the preview, a forged trial's "post" is a local page.
+  if (url.startsWith('/')) location.href = url;
 }
 
 export function showLoginPrompt(): void {

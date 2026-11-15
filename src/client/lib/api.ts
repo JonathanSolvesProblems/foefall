@@ -1,5 +1,5 @@
-import type { AttemptResponse, ErrorResponse, InitResponse, Nation, OkResponse } from '../../shared/api';
-import type { Action } from '../../shared/engine/rules';
+import type { AttemptResponse, ErrorResponse, ForgeResponse, InitResponse, Nation, OkResponse } from '../../shared/api';
+import type { Action, Puzzle } from '../../shared/engine/rules';
 
 async function call<T>(path: string, body?: unknown): Promise<T> {
   const res = await fetch(path, {
@@ -22,4 +22,5 @@ export const api = {
   seen: () => call<OkResponse>('/api/seen', {}),
   chalk: () => call<OkResponse>('/api/chalk', {}),
   subscribe: () => call<OkResponse>('/api/subscribe', {}),
+  forge: (puzzle: Puzzle, proof: Action[], title: string) => call<ForgeResponse>('/api/forge', { puzzle, proof, title }),
 };

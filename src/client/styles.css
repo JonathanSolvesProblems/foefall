@@ -363,6 +363,108 @@ button {
   flex: 2;
 }
 
+/* --- Forge ------------------------------------------------------------------------------------------------------ */
+
+.forge .board-wrap {
+  width: min(100%, calc(100dvh - 330px));
+}
+
+.palette {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.tool {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px 0 3px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--night-2);
+  font-size: 10px;
+  color: var(--muted);
+  min-width: 0;
+}
+
+.tool span {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tool.active {
+  border-color: var(--gold);
+  background: #2a2014;
+  color: var(--gold-hi);
+}
+
+.tool .badge {
+  width: 30px;
+  height: 30px;
+}
+
+.swatch {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  border: 1px solid #5f5368;
+  display: block;
+}
+
+.swatch-floor {
+  background: #2f2536;
+}
+
+.swatch-rock {
+  background: linear-gradient(180deg, #5a4e63, #3a3043);
+}
+
+.swatch-chasm {
+  background: radial-gradient(circle, #1d1230, #050307);
+  border-color: #7a5cc0;
+}
+
+.swatch-erase {
+  background:
+    linear-gradient(45deg, transparent 45%, #ff8a6a 46%, #ff8a6a 54%, transparent 55%),
+    linear-gradient(-45deg, transparent 45%, #ff8a6a 46%, #ff8a6a 54%, transparent 55%);
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 12px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.field input {
+  height: 44px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: #0d0a10;
+  color: var(--ink);
+  font: inherit;
+  font-size: 16px;
+}
+
+.field input:focus {
+  outline: 2px solid var(--gold-lo);
+}
+
+.error-line {
+  color: var(--ember-hi);
+  font-size: 14px;
+  margin: 8px 0 0;
+}
+
 /* --- Sheets (result and help) ----------------------------------------------------------------------------------- */
 
 .sheet-backdrop {

@@ -3,9 +3,11 @@ import './styles.css';
 import { StrictMode, useCallback, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { type AttemptResponse, type InitResponse, type Nation, NATIONS } from '../shared/api';
-import { CLASSES, type Outcome, playTurn, type Puzzle, type State } from '../shared/engine/rules';
+import { navigateTo } from '@devvit/web/client';
+import { type Action, CLASSES, type Outcome, playTurn, type Puzzle, type State } from '../shared/engine/rules';
 import { WARMUP } from '../shared/trials/warmup';
 import { Board } from './components/Board';
+import { EMPTY_FORGE, ForgeEditor } from './components/ForgeEditor';
 import { CLASS_ICON, IconBadge, Moon } from './components/art';
 import { HelpSheet, ResultSheet } from './components/Sheets';
 import { api } from './lib/api';
@@ -25,7 +27,7 @@ function useToast() {
   return { msg, show };
 }
 
-type Mode = 'warmup' | 'daily';
+type Mode = 'warmup' | 'daily' | 'proof';
 
 function Play(props: {
   data: InitResponse | null;
@@ -34,6 +36,10 @@ function Play(props: {
   onData: (d: Partial<Pick<InitResponse, 'me' | 'community'>>) => void;
   onBeginDaily: () => void;
   toast: (m: string) => void;
+  onForge?: (() => void) | undefined;
+  onPublish?: ((actions: Action[], title: string) => Promise<void>) | undefined;
+  onBackToForge?: (() => void) | undefined;
+  proofWays?: number | undefined;
 }) {
   const { puzzle, mode, data } = props;
   const t = useTrial(puzzle);
@@ -83,7 +89,7 @@ function Play(props: {
     await sleep(720);
     setResult({ outcome: played.outcome, server });
     setPhase('result');
-    if (played.outcome.win) journey.end(true, server?.me.tries ?? 1);
+    if (played.outcome.win && mode !== 'proof') journey.end(true, server?.me.tries ?? 1);
   };
 
   const backToPlan = (keepMoves: boolean) => {
@@ -154,7 +160,7 @@ function Play(props: {
   }
 
   let hint: string | null = null;
-  if (planning && mode === 'daily' && sel && !t.committed.acted.includes(sel.id)) {
+  if (planning && mode !== 'warmup' && sel && !t.committed.acted.includes(sel.id)) {
     const c = CLASSES[sel.cls];
     hint = t.pending
       ? t.targetTiles.length > 0
@@ -165,9 +171,14 @@ function Play(props: {
         : `${c.name}: walk to a gold dot. ${c.blurb}`;
   }
 
-  const sub = data
-    ? `#${data.day} · ${data.moon} · ${data.feel}${data.isToday ? '' : ' · past trial'}`
-    : 'Warm-up · one move';
+  const sub =
+    mode === 'proof'
+      ? 'Prove your trial: clear it yourself'
+      : data?.forge
+        ? `Forged by u/${data.forge.author}${data.forge.title ? ` · ${data.forge.title}` : ''}`
+        : data
+          ? `#${data.day} · ${data.moon} · ${data.feel}${data.isToday ? '' : ' · past trial'}`
+          : 'Warm-up · one move';
 
   return (
     <div className="game">
@@ -276,6 +287,10 @@ function Play(props: {
           onNation={pick}
           onChalk={chalk}
           onJoin={join}
+          onForge={props.onForge}
+          onPublish={props.onPublish ? (title: string) => props.onPublish!(t.actions, title) : undefined}
+          onBackToForge={props.onBackToForge}
+          proofWays={props.proofWays}
         />
       )}
       {help && <HelpSheet puzzle={puzzle} onClose={() => setHelp(false)} />}
@@ -283,10 +298,33 @@ function Play(props: {
   );
 }
 
+const DRAFT_KEY = 'forewarned:forgeDraft';
+
+function loadDraft(): Puzzle {
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (raw) return { ...EMPTY_FORGE, ...(JSON.parse(raw) as Partial<Puzzle>), id: 'forge' };
+  } catch {
+    /* no storage: start blank */
+  }
+  return EMPTY_FORGE;
+}
+
+function saveDraft(p: Puzzle) {
+  try {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(p));
+  } catch {
+    /* no storage: the draft lives only in memory */
+  }
+}
+
 function App() {
   const [data, setData] = useState<InitResponse | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [mode, setMode] = useState<Mode | null>(null);
+  const [view, setView] = useState<'play' | 'forge'>('play');
+  const [draft, setDraft] = useState<Puzzle>(loadDraft);
+  const [proofWays, setProofWays] = useState(0);
   const toast = useToast();
 
   useEffect(() => {
@@ -310,6 +348,22 @@ function App() {
     journey.interaction('warmup_done');
   };
 
+  const changeDraft = (p: Puzzle) => {
+    setDraft(p);
+    saveDraft(p);
+  };
+  const openForge = () => {
+    setView('forge');
+    journey.interaction('forge_open');
+  };
+  const publish = async (actions: Action[], title: string) => {
+    const res = await api.forge(draft, actions, title);
+    journey.interaction('forge_posted');
+    changeDraft(EMPTY_FORGE);
+    toast.show('Your trial is posted. Opening it now.');
+    navigateTo(res.url);
+  };
+
   let body;
   if (err) {
     body = (
@@ -328,6 +382,38 @@ function App() {
         <p className="muted">Reading the omens…</p>
       </div>
     );
+  } else if (view === 'forge') {
+    body = (
+      <ForgeEditor
+        initial={draft}
+        onChange={changeDraft}
+        onExit={() => setView('play')}
+        onProve={(p, ways) => {
+          changeDraft(p);
+          setProofWays(ways);
+          setMode('proof');
+          setView('play');
+        }}
+      />
+    );
+  } else if (mode === 'proof') {
+    body = (
+      <Play
+        key={`proof-${JSON.stringify(draft)}`}
+        data={data}
+        puzzle={draft}
+        mode="proof"
+        onData={() => undefined}
+        onBeginDaily={beginDaily}
+        toast={toast.show}
+        proofWays={proofWays}
+        onPublish={publish}
+        onBackToForge={() => {
+          setMode('daily');
+          setView('forge');
+        }}
+      />
+    );
   } else {
     body = (
       <Play
@@ -338,6 +424,7 @@ function App() {
         onData={merge}
         onBeginDaily={beginDaily}
         toast={toast.show}
+        onForge={data.me.username ? openForge : undefined}
       />
     );
   }

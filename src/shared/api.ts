@@ -60,6 +60,8 @@ export type InitResponse = {
   puzzle: Puzzle;
   me: Me;
   community: Community;
+  /** Set when this post holds a trial a redditor forged, rather than the day's trial. */
+  forge: { id: number; title: string; author: string } | null;
 };
 
 export type AttemptRequest = { actions: Action[] };
@@ -79,5 +81,7 @@ export type AttemptResponse = {
 };
 
 export type NationRequest = { nation: Nation };
+export type ForgeRequest = { puzzle: Puzzle; proof: Action[]; title: string };
+export type ForgeResponse = { type: 'forge'; id: number; postId: string; url: string };
 export type OkResponse = { type: 'ok'; message: string };
 export type ErrorResponse = { type: 'error'; message: string };
