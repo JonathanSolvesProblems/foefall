@@ -72,8 +72,16 @@ export async function selfTest(): Promise<string> {
       problems.push(`today's post ${postId} could not be read: ${(e as Error).message}`);
     }
   }
+  // Judges must be able to open the demo post: report the community type and size on every run.
+  let community = 'community type unknown';
+  try {
+    const sub = await reddit.getCurrentSubreddit();
+    community = `r/${sub.name} is ${sub.type} with ${sub.numberOfSubscribers} members`;
+  } catch (e) {
+    community = `community type unreadable: ${(e as Error).message}`;
+  }
   const ms = Date.now() - t0;
   return problems.length
     ? `[selftest] FAIL day ${day}: ${problems.join('; ')} (${ms} ms)`
-    : `[selftest] ok day ${day} (${s.tier}): won way ${r.wayKey} on scratch day, ${res.ways.length} ways, forge round trip won, ${post} (${ms} ms)`;
+    : `[selftest] ok day ${day} (${s.tier}): won way ${r.wayKey} on scratch day, ${res.ways.length} ways, forge round trip won, ${post}, ${community} (${ms} ms)`;
 }
