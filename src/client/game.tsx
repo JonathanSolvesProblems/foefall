@@ -277,7 +277,8 @@ function Play(props: {
         />
       </div>
 
-      {hint && <div className="muted" style={{ fontSize: 13, textAlign: 'center', minHeight: 18 }}>{hint}</div>}
+      {/* Always present outside the warm-up, so the board above does not move when a hint comes or goes. */}
+      {mode !== 'warmup' && <div className="hint muted">{hint}</div>}
 
       <div className="heroes">
         {puzzle.heroes.map((h) => {
@@ -296,7 +297,10 @@ function Play(props: {
                 <span className="ability" style={{ display: 'block' }}>
                   {fallen ? 'Fallen' : done ? 'Done' : CLASSES[h.cls].ability}
                 </span>
-                {!fallen && !done && <span className="blurb">{CLASSES[h.cls].blurb}</span>}
+                {/* Kept in place when the hero is done, so the card keeps its height and the board does not move. */}
+                <span className="blurb" style={done || fallen ? { visibility: 'hidden' } : undefined}>
+                  {CLASSES[h.cls].blurb}
+                </span>
               </span>
             </button>
           );

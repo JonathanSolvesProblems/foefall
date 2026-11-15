@@ -52,15 +52,28 @@ async function fits(page: Page, label: string) {
   for (const o of r.out) findings.push(`${label}: ${o}`);
 }
 
-async function playLine(page: Page, p: Puzzle, line: Action[]) {
+async function boardTop(page: Page) {
+  return (await page.locator('.board-wrap svg').boundingBox())?.y ?? -1;
+}
+
+/** Plays a line. With `steady`, also checks after every tap that the board has not moved, since a moving board
+ *  makes the next tap land on the wrong tile (it did twice on a real phone: the intro line and the hint line). */
+async function playLine(page: Page, p: Puzzle, line: Action[], steady?: { label: string; top: number }) {
   let s = initialState(p);
+  const tap = async (x: number, y: number) => {
+    await tapTile(page, p, x, y);
+    if (!steady) return;
+    const top = await boardTop(page);
+    if (Math.abs(top - steady.top) > 0.5) findings.push(`${steady.label}: the board moved ${Math.round(top - steady.top)} px after a tap`);
+    steady.top = top; // report each move once
+  };
   for (const a of line) {
     const h = s.units.find((u) => u.id === a.hero)!;
     const moves = a.to[0] !== h.x || a.to[1] !== h.y;
-    await tapTile(page, p, h.x, h.y);
-    if (moves) await tapTile(page, p, a.to[0], a.to[1]);
-    if (a.target) await tapTile(page, p, a.target[0], a.target[1]);
-    else if (moves) await tapTile(page, p, a.to[0], a.to[1]);
+    await tap(h.x, h.y);
+    if (moves) await tap(a.to[0], a.to[1]);
+    if (a.target) await tap(a.target[0], a.target[1]);
+    else if (moves) await tap(a.to[0], a.to[1]);
     else await tapButton(page, 'Wait');
     s = applyAction(s, a)!;
   }
@@ -108,11 +121,13 @@ async function run(tag: string, viewport: { width: number; height: number }, dpr
 
   const s = trialFor(season, day);
   const ways = solve(s.puzzle).ways;
-  await playLine(page, s.puzzle, ways[ways.length - 1]!.line);
+  const steady = { label: tag, top: await boardTop(page) };
+  await playLine(page, s.puzzle, ways[ways.length - 1]!.line, steady);
   const ready = await page.locator('.btn.primary.ready').count();
   if (!ready) findings.push(`${tag}: forecast did not turn gold before Strike on a winning line`);
   await page.screenshot({ path: `${OUT}/${tag}-4-ready.png` });
   await tapButton(page, 'Strike');
+  if (Math.abs((await boardTop(page)) - steady.top) > 0.5) findings.push(`${tag}: the board moved when Strike was pressed`);
   await page.waitForSelector('.sheet');
   await page.waitForTimeout(400);
   await page.screenshot({ path: `${OUT}/${tag}-5-win.png` });

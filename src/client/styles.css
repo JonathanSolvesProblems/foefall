@@ -182,6 +182,18 @@ button {
   margin: 0 auto;
 }
 
+/* Room for two lines, the most a hint takes on a narrow phone. */
+.hint {
+  width: 100%;
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  line-height: 17px;
+  text-align: center;
+}
+
 .topbar {
   width: 100%;
   margin-bottom: auto;
@@ -223,7 +235,8 @@ button {
 
 .forecast {
   width: 100%;
-  min-height: 40px;
+  /* Same height as the coach line, so the board does not jump when one replaces the other. */
+  min-height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -251,6 +264,10 @@ button {
 
 .coach {
   width: 100%;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 8px 12px;
   border-radius: 10px;
   background: linear-gradient(180deg, #2e2212, #221a10);
@@ -338,7 +355,7 @@ button {
     display: block;
   }
   .forecast {
-    min-height: 46px;
+    min-height: 64px;
   }
 }
 
@@ -643,6 +660,10 @@ button {
 
 .codex .slot .who {
   min-width: 0;
+}
+
+/* The ellipsis has to sit on the lines themselves, not their wrapper, or long usernames are cut mid-letter. */
+.codex .slot .who > div {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
