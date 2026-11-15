@@ -18,3 +18,7 @@ export function navigateTo(url: string): void {
 export function showLoginPrompt(): void {
   console.log('[login prompt]');
 }
+
+export async function showShareSheet(opts: { title?: string; text?: string }): Promise<void> {
+  console.log('[share]', opts.title, opts.text);
+}

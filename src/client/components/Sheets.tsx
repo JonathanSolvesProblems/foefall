@@ -1,4 +1,4 @@
-import { showLoginPrompt } from '@devvit/web/client';
+import { showLoginPrompt, showShareSheet } from '@devvit/web/client';
 import { useState } from 'react';
 import {
   type AttemptResponse,
@@ -261,6 +261,14 @@ export function ResultSheet(p: ResultProps) {
     ? community.ways.findIndex((w) => w.key === outcome.wayKey) + 1
     : 0;
 
+  // Spoiler-free: the try count and the hunt, never the way itself.
+  const share = () => {
+    const what = p.data?.forge ? `u/${p.data.forge.author}'s Foefall trial` : `Foefall #${p.data?.day ?? ''}`;
+    const tries = me?.tries || 1;
+    const hunt = community ? ` ${community.ways.length} of ${total} ways found so far.` : '';
+    showShareSheet({ title: 'Foefall', text: `I cleared ${what} on try ${tries}.${hunt} Can you find another way?` }).catch(() => undefined);
+  };
+
   if (!outcome.win) {
     return (
       <div className="sheet-backdrop">
@@ -353,6 +361,9 @@ export function ResultSheet(p: ResultProps) {
               Leave a chalk mark
             </button>
           )}
+          <button className="btn" onClick={share}>
+            Share
+          </button>
         </div>
         {community && (
           <>
