@@ -1,5 +1,5 @@
 // Mobile validation against the local preview with touch input: a Galaxy S24-sized phone, the same phone inside Reddit's
-// expanded view (minus Reddit's chrome), and a small 360 x 640 phone. Plays the warm-up and today's trial with taps,
+// expanded view (minus Reddit's chrome), a small 360 x 640 phone and a 1024 x 768 laptop window. Plays the warm-up and today's trial with taps,
 // exercises Undo and Wait, opens help, and checks that nothing scrolls or spills out of the viewport.
 // Needs `npm run local`. Usage: npx tsx tools/device-check.ts
 import { mkdirSync, readFileSync } from 'node:fs';
@@ -195,4 +195,6 @@ await runLoggedOut();
 await run('s24', { width: 412, height: 892 }, 2.625);
 await run('s24-in-reddit', { width: 412, height: 780 }, 2.625);
 await run('small', { width: 360, height: 640 }, 2);
+// A short laptop window: the board is limited by height here, not width, which phones never exercise.
+await run('laptop', { width: 1024, height: 768 }, 1);
 console.log(findings.length ? `FINDINGS:\n- ${findings.join('\n- ')}` : 'no findings');
