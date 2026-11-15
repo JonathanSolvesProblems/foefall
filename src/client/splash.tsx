@@ -4,7 +4,7 @@ import './splash.css';
 import { requestExpandedMode } from '@devvit/web/client';
 import { type MouseEvent, StrictMode, useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import type { InitResponse } from '../shared/api';
+import { type InitResponse, NATIONS, NATION_LIST } from '../shared/api';
 import { forecast, initialState } from '../shared/engine/rules';
 import { Board } from './components/Board';
 import { Moon } from './components/art';
@@ -29,6 +29,7 @@ function Splash() {
   const open = (e: MouseEvent) => requestExpandedMode(e.nativeEvent, 'game');
   const me = data?.me;
   const c = data?.community;
+  const leader = c ? [...NATION_LIST].sort((a, b) => c.nations[b] - c.nations[a]).find((n) => c.nations[n] > 0) : undefined;
   const cta = !data
     ? 'Begin'
     : me?.solved
@@ -92,6 +93,12 @@ function Splash() {
                     </b>{' '}
                     {c && c.ways.length === 0 ? 'ways found. Every one is unclaimed.' : `ways found by r/${data.subreddit}`}
                   </li>
+                  {c && leader && (
+                    <li>
+                      <b>{NATIONS[leader].sigil}</b> {NATIONS[leader].short} leads today with {c.nations[leader]}{' '}
+                      {c.nations[leader] === 1 ? 'clear' : 'clears'}
+                    </li>
+                  )}
                   {me && me.streak > 0 && (
                     <li>
                       <b>{me.streak}</b> day streak

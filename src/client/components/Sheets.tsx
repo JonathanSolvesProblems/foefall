@@ -66,6 +66,25 @@ export function Codex(props: { community: Community; me: Me }) {
   );
 }
 
+/** Today's clears by nation, largest first, with the player's own nation outlined. */
+export function NationTally(props: { counts: Record<Nation, number>; mine: Nation | null }) {
+  const total = NATION_LIST.reduce((n, k) => n + props.counts[k], 0);
+  if (total === 0) return null;
+  const order = [...NATION_LIST].sort((a, b) => props.counts[b] - props.counts[a]);
+  return (
+    <div className="tally" aria-label="Clears by nation today">
+      {order.map((n) => (
+        <span key={n} className={`tally-chip${props.mine === n ? ' mine' : ''}`} style={{ borderColor: NATIONS[n].color }}>
+          <span className="sigil" style={{ background: NATIONS[n].color }}>
+            {NATIONS[n].sigil}
+          </span>
+          {NATIONS[n].short} {props.counts[n]}
+        </span>
+      ))}
+    </div>
+  );
+}
+
 function NationPicker(props: { onPick: (n: Nation) => void; busy: boolean }) {
   return (
     <>
@@ -341,6 +360,12 @@ export function ResultSheet(p: ResultProps) {
               The hunt: {community.ways.length} of {total} ways found
             </h3>
             <Codex community={community} me={me ?? emptyMe} />
+          </>
+        )}
+        {community && (
+          <>
+            {Object.values(community.nations).some((v) => v > 0) && <h3>The nations today</h3>}
+            <NationTally counts={community.nations} mine={me?.nation ?? null} />
           </>
         )}
         {p.server?.saved && me && !me.nation && (
