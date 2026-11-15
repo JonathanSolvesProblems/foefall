@@ -155,7 +155,9 @@ api.post('/forge', async (c) => {
       postData: { forge: id },
       runAs: 'USER',
       userGeneratedContent: { text: title || 'Untitled forged trial' },
-      textFallback: { text: `A Forewarned trial forged by u/${who.username}. Open this post on reddit.com or in the Reddit app to play.` },
+      textFallback: {
+        text: `A Forewarned trial forged by u/${who.username}. It plays inside this post. If you only see this text, update the Reddit app or open the post on reddit.com in a browser.`,
+      },
     });
     await kv.set(`fw:post:${post.id}`, `forge:${id}`);
     await kv.expire(`fw:forge:${id}:author`, RETENTION_SECONDS);

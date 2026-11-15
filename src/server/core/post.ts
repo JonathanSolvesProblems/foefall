@@ -23,7 +23,7 @@ export async function postDay(day: number = today(), force = false): Promise<{ i
     entry: 'default',
     postData: { day },
     textFallback: {
-      text: `Forewarned #${day}: today's tactics trial from the world of Orvandel. Open this post on reddit.com or in the Reddit app to play.`,
+      text: `Forewarned #${day} is a daily tactics puzzle that plays inside this post. If you only see this text, your Reddit app is too old to show it: update the app, or open the post on reddit.com in a browser.`,
     },
   });
   await redis.set(`fw:post:${post.id}`, String(day));
