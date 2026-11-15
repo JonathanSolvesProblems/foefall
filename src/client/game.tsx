@@ -12,6 +12,7 @@ import { CLASS_ICON, IconBadge, Moon } from './components/art';
 import { HelpSheet, ResultSheet } from './components/Sheets';
 import { api } from './lib/api';
 import { journey } from './lib/journey';
+import { sfx } from './lib/sfx';
 import { useTrial } from './lib/useTrial';
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -48,6 +49,7 @@ function Play(props: {
   const [result, setResult] = useState<{ outcome: Outcome; server: AttemptResponse | null } | null>(null);
   const [help, setHelp] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [muted, setMuted] = useState(sfx.isMuted());
   const [fx, setFx] = useState<{
     attacking: Set<string>;
     hitting: Set<string>;
@@ -72,6 +74,7 @@ function Play(props: {
       bursts: [],
     });
     setPhase('striking');
+    sfx.strike();
     const req = mode === 'daily' ? api.attempt(t.actions).catch((e: Error) => (props.toast(e.message), null)) : Promise.resolve(null);
     await sleep(820);
     const before = new Set([...t.committed.fallen.map((f) => f.id), ...t.committed.lost.map((l) => l.id)]);
@@ -84,11 +87,14 @@ function Play(props: {
       ],
     });
     setEndState(played.end);
+    played.end.fallen.filter((f) => !before.has(f.id)).forEach((_, i) => sfx.fall(i));
     const server = await req;
     if (server) props.onData({ me: server.me, community: server.community });
     await sleep(720);
     setResult({ outcome: played.outcome, server });
     setPhase('result');
+    if (played.outcome.win) sfx.win();
+    else sfx.lose();
     if (played.outcome.win && mode !== 'proof') journey.end(true, server?.me.tries ?? 1);
   };
 
@@ -104,6 +110,10 @@ function Play(props: {
     if (phase !== 'plan') return;
     journey.start();
     const r = t.tap(x, y);
+    if (r === 'select') sfx.select();
+    else if (r === 'move') sfx.step();
+    else if (r === 'act') sfx.ability();
+    else if (r === 'wait') sfx.select();
     if (r === 'act' || r === 'wait') journey.progress((t.actions.length + 1) / (puzzle.heroes.length + 1), r);
   };
 
@@ -193,6 +203,25 @@ function Play(props: {
             {data.community.ways.length}/{data.community.waysTotal} ways
           </span>
         )}
+        <button
+          className="icon-btn"
+          aria-label={muted ? 'Turn sound on' : 'Turn sound off'}
+          aria-pressed={!muted}
+          onClick={() => {
+            sfx.setMuted(!muted);
+            setMuted(!muted);
+            if (muted) sfx.select();
+          }}
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 9h4l5-4v14l-5-4H4z" fill="currentColor" />
+            {muted ? (
+              <path d="M16 9l5 6M21 9l-5 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            ) : (
+              <path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            )}
+          </svg>
+        </button>
         <button className="icon-btn" aria-label="How to play" onClick={() => (setHelp(true), journey.interaction('help'))}>
           ?
         </button>

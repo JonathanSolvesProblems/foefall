@@ -363,6 +363,22 @@ button {
   flex: 2;
 }
 
+/* Narrow phones: smaller round buttons so the day and moon line has room. */
+@media (max-width: 380px) {
+  .topbar {
+    gap: 6px;
+  }
+  .topbar .icon-btn {
+    width: 34px;
+    height: 34px;
+    font-size: 17px;
+  }
+  .ways-pill {
+    padding: 3px 8px;
+    font-size: 12px;
+  }
+}
+
 /* --- Forge ------------------------------------------------------------------------------------------------------ */
 
 .forge .board-wrap {
