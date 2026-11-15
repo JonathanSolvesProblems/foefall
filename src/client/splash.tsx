@@ -10,6 +10,13 @@ import { Board } from './components/Board';
 import { Moon } from './components/art';
 import { api } from './lib/api';
 
+/** "Sunday, November 15" for a trial's UTC date (YYYY-MM-DD), the day it was posted for. */
+function longDate(iso: string): string {
+  const d = new Date(`${iso}T00:00:00Z`);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' });
+}
+
 function Splash() {
   const [data, setData] = useState<InitResponse | null>(null);
   const [err, setErr] = useState(false);
@@ -76,6 +83,7 @@ function Splash() {
           <div className="splash-info">
             {data && (
               <>
+                {!data.forge && <div className="splash-date">{longDate(data.date)}</div>}
                 <div className="display splash-day">{data.forge ? data.forge.title || 'A trial by a redditor' : `#${data.day} · ${data.moon}`}</div>
                 <div className="splash-feel">{data.forge ? `Built by u/${data.forge.author} · ${data.feel}` : data.feel}</div>
                 <p className="splash-rule">Every monster shows where it will strike. Make them strike each other.</p>
