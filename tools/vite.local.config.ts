@@ -11,6 +11,7 @@ import { defineConfig, type Plugin, type ViteDevServer } from 'vite';
 
 function mockApi(): Plugin {
   let kv: unknown = null;
+  let kvFrom: unknown = null;
   return {
     name: 'forewarned-mock-api',
     configureServer(server: ViteDevServer) {
@@ -19,7 +20,11 @@ function mockApi(): Plugin {
         const game = (await server.ssrLoadModule(resolve('src/shared/game.ts'))) as typeof import('../src/shared/game');
         const gen = (await server.ssrLoadModule(resolve('src/shared/engine/generator.ts'))) as typeof import('../src/shared/engine/generator');
         const season = JSON.parse(readFileSync(resolve('src/server/season.json'), 'utf8'));
-        kv ??= game.memoryKV();
+        // A hot-reloaded game module gets a fresh store, so old store objects never meet new code.
+        if (kvFrom !== game) {
+          kv = game.memoryKV();
+          kvFrom = game;
+        }
         const store = kv as ReturnType<typeof game.memoryKV>;
         const ref = new URL(req.headers.referer ?? 'http://x/');
         const user = ref.searchParams.get('user');
@@ -42,6 +47,7 @@ function mockApi(): Plugin {
           res.end(JSON.stringify(data));
         };
         const path = req.url.split('?')[0];
+        try {
         if (path.startsWith('/api/telemetry/')) return send(200, { receipt: { status: 'LOCAL', message: 'local' } });
         if (path === '/api/init') {
           if (ref.searchParams.get('new') === '1' && who.userId) await store.hSet(`fw:u:${who.userId}`, { seen: '0' });
@@ -62,6 +68,10 @@ function mockApi(): Plugin {
         if (path === '/api/chalk') return send(200, { type: 'ok', message: 'Chalk mark left in the comments.' });
         if (path === '/api/subscribe') return send(200, { type: 'ok', message: 'Joined r/forewarned_dev.' });
         return send(404, { type: 'error', message: 'not found' });
+        } catch (e) {
+          console.error('[mock api]', e);
+          return send(500, { type: 'error', message: (e as Error).message });
+        }
       });
     },
   };

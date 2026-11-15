@@ -42,6 +42,11 @@ function Play(props: {
   const [result, setResult] = useState<{ outcome: Outcome; server: AttemptResponse | null } | null>(null);
   const [help, setHelp] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [fx, setFx] = useState<{
+    attacking: Set<string>;
+    hitting: Set<string>;
+    bursts: { id: string; x: number; y: number; hero: boolean }[];
+  } | null>(null);
 
   useEffect(() => {
     t.setSelected(puzzle.heroes[0]?.id ?? null);
@@ -55,9 +60,23 @@ function Play(props: {
     if (!played) return;
     journey.start();
     journey.interaction('strike', `${t.actions.length}`);
+    setFx({
+      attacking: new Set(played.events.map((e) => e.attacker)),
+      hitting: new Set(played.events.flatMap((e) => e.hits)),
+      bursts: [],
+    });
     setPhase('striking');
     const req = mode === 'daily' ? api.attempt(t.actions).catch((e: Error) => (props.toast(e.message), null)) : Promise.resolve(null);
     await sleep(820);
+    const before = new Set([...t.committed.fallen.map((f) => f.id), ...t.committed.lost.map((l) => l.id)]);
+    setFx({
+      attacking: new Set(),
+      hitting: new Set(),
+      bursts: [
+        ...played.end.fallen.filter((f) => !before.has(f.id)).map((f) => ({ id: f.id, x: f.x, y: f.y, hero: false })),
+        ...played.end.lost.filter((l) => !before.has(l.id)).map((l) => ({ id: l.id, x: l.x, y: l.y, hero: true })),
+      ],
+    });
     setEndState(played.end);
     const server = await req;
     if (server) props.onData({ me: server.me, community: server.community });
@@ -70,6 +89,7 @@ function Play(props: {
   const backToPlan = (keepMoves: boolean) => {
     setResult(null);
     setEndState(null);
+    setFx(null);
     setPhase('plan');
     if (!keepMoves) t.reset();
   };
@@ -196,6 +216,9 @@ function Play(props: {
           moveTiles={planning ? t.moveTiles : []}
           targetTiles={planning ? t.targetTiles : []}
           striking={phase === 'striking' && !endState}
+          attacking={fx?.attacking}
+          hitting={fx?.hitting}
+          bursts={fx?.bursts}
           onTile={onTile}
           label={`Trial board, ${puzzle.w} by ${puzzle.h}`}
         />

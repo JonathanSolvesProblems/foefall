@@ -71,14 +71,18 @@ function Splash() {
                 <div className="splash-feel">{data.feel}</div>
                 <p className="splash-rule">Every monster shows where it will strike. Make them strike each other.</p>
                 <ul className="splash-stats">
-                  <li>
-                    <b>{c?.solvers ?? 0}</b> cleared of {c?.players ?? 0} who tried
-                  </li>
+                  {c && c.players > 0 ? (
+                    <li>
+                      <b>{c.solvers}</b> cleared of {c.players} who tried
+                    </li>
+                  ) : (
+                    <li>Nobody has tried it yet. Be the first.</li>
+                  )}
                   <li>
                     <b>
                       {c?.ways.length ?? 0}/{c?.waysTotal ?? 0}
                     </b>{' '}
-                    ways found by r/{data.subreddit}
+                    {c && c.ways.length === 0 ? 'ways found. Every one is unclaimed.' : `ways found by r/${data.subreddit}`}
                   </li>
                   {me && me.streak > 0 && (
                     <li>

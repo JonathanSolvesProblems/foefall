@@ -702,6 +702,68 @@ button {
   animation: fade 160ms ease;
 }
 
+.token.attacking .shape {
+  animation: attack 560ms ease-out;
+}
+
+@keyframes attack {
+  35% {
+    transform: scale(1.16);
+  }
+}
+
+.token.hit .shaker {
+  animation: shake 420ms ease-in-out 220ms;
+}
+
+.token.hit .ring {
+  animation: hitflash 640ms ease-out 200ms;
+}
+
+@keyframes shake {
+  20% {
+    transform: translate(-6px, 0);
+  }
+  40% {
+    transform: translate(6px, 0);
+  }
+  60% {
+    transform: translate(-4px, 0);
+  }
+  80% {
+    transform: translate(3px, 0);
+  }
+}
+
+@keyframes hitflash {
+  30% {
+    stroke: #fff4e0;
+    stroke-width: 10;
+  }
+}
+
+.burst {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: burst 700ms ease-out forwards;
+  opacity: 0;
+}
+
+.burst.late {
+  animation-delay: 120ms;
+}
+
+@keyframes burst {
+  0% {
+    transform: scale(0.3);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.7);
+    opacity: 0;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .token,
   .token.gone,
@@ -709,6 +771,10 @@ button {
     transition: none;
   }
   .btn.primary.ready,
+  .token.attacking .shape,
+  .token.hit .shaker,
+  .token.hit .ring,
+  .burst,
   .danger-ring,
   .token.selected .ring,
   .striking .strike-tile {

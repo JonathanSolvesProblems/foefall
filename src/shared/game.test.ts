@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { dateOfDay, dayNumber, EPOCH_UTC } from './engine/generator';
 import { solve } from './engine/solver';
-import { loadInit, markSeen, memoryKV, recordAttempt, type SeasonDay, setNation, trialFor } from './game';
+import { loadInit, markSeen, memoryKV, recordAttempt, RETENTION_SECONDS, type SeasonDay, setNation, trialFor } from './game';
 
 const season = JSON.parse(readFileSync('src/server/season.json', 'utf8')) as SeasonDay[];
 
@@ -119,6 +119,17 @@ describe('recording attempts', () => {
     expect(r.win).toBe(true);
     expect(r.saved).toBe(false);
     expect(r.community.solvers).toBe(0);
+  });
+
+  it('every key that holds a player’s name, id or avatar expires within 30 days (Devvit Rules)', async () => {
+    const kv = memoryKV();
+    const { ways } = await winningLine(4);
+    await setNation(kv, 't2_gi', 'concord');
+    await recordAttempt(kv, season, { day: 4, today: 4, who: who('gi'), actions: ways[0]!.line, nowMs: 0 });
+    for (const key of ['fw:u:t2_gi', 'fw:d4:u:t2_gi', 'fw:d4:ways', 'fw:d4:board', 'fw:d4:boardinfo']) {
+      expect(kv.ttl.get(key), key).toBeLessThanOrEqual(RETENTION_SECONDS);
+      expect(RETENTION_SECONDS).toBeLessThanOrEqual(30 * 86_400);
+    }
   });
 
   it('nation and the warm-up flag persist, and nation solves are tallied', async () => {

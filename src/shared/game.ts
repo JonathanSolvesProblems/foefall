@@ -16,7 +16,15 @@ export type KV = {
   hIncrBy(key: string, field: string, by: number): Promise<number>;
   zAdd(key: string, ...members: { member: string; score: number }[]): Promise<unknown>;
   zRange(key: string, start: number, stop: number, options?: { by: 'rank' }): Promise<{ member: string; score: number }[]>;
+  expire(key: string, seconds: number): Promise<unknown>;
 };
+
+/**
+ * Devvit Rules ask apps to remove a deleted account's data, and recommend deleting stored user data within 30 days.
+ * There is no account-deletion trigger, so every key that holds a username, user id or avatar expires 30 days after its
+ * last write. A player's own record renews while they keep playing.
+ */
+export const RETENTION_SECONDS = 30 * 24 * 60 * 60;
 
 export type Who = { userId: string | undefined; username: string | undefined; avatar: string | undefined };
 
@@ -174,6 +182,7 @@ export async function recordAttempt(
   const du = K.dayUser(day, userId);
   const tries = await kv.hIncrBy(du, 'tries', 1);
   if (tries === 1) await kv.hIncrBy(K.stats(day), 'players', 1);
+  await Promise.all([du, K.stats(day)].map((k) => kv.expire(k, RETENTION_SECONDS)));
 
   let newForMe = false;
   let firstFinder = false;
@@ -209,6 +218,8 @@ export async function recordAttempt(
       }
     }
     await kv.hSet(K.boardInfo(day), { [username]: JSON.stringify({ avatar: avatar ?? null, ways: myWays.length }) });
+    const touched = [K.user(userId), K.ways(day), K.wayCount(day), K.nations(day), K.board(day), K.boardInfo(day)];
+    await Promise.all(touched.map((k) => kv.expire(k, RETENTION_SECONDS)));
   }
 
   const me = await loadMe(kv, day, opts.today, opts.who);
@@ -218,10 +229,12 @@ export async function recordAttempt(
 
 export async function setNation(kv: KV, userId: string, nation: Nation): Promise<void> {
   await kv.hSet(K.user(userId), { nation });
+  await kv.expire(K.user(userId), RETENTION_SECONDS);
 }
 
 export async function markSeen(kv: KV, userId: string): Promise<void> {
   await kv.hSet(K.user(userId), { seen: '1' });
+  await kv.expire(K.user(userId), RETENTION_SECONDS);
 }
 
 /** The user flair text: nation sigil and name, then the streak if there is one. Reddit caps flair at 64 characters. */
@@ -231,15 +244,20 @@ export function flairText(me: Me, sigil: string, short: string): string {
 }
 
 /** An in-memory KV for tests and the local preview. */
-export function memoryKV(): KV {
+export function memoryKV(): KV & { ttl: Map<string, number> } {
   const h = new Map<string, Map<string, string>>();
   const z = new Map<string, Map<string, number>>();
+  const ttl = new Map<string, number>();
   const hash = (k: string) => {
     let m = h.get(k);
     if (!m) h.set(k, (m = new Map()));
     return m;
   };
   return {
+    ttl,
+    expire: async (k, seconds) => {
+      ttl.set(k, seconds);
+    },
     hGet: async (k, f) => h.get(k)?.get(f),
     hGetAll: async (k) => Object.fromEntries(h.get(k) ?? []),
     hSet: async (k, v) => {

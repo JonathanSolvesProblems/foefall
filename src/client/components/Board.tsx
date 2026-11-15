@@ -16,6 +16,11 @@ export type BoardProps = {
   moveTiles: readonly (readonly [number, number])[];
   targetTiles: readonly (readonly [number, number])[];
   striking: boolean;
+  /** During Strike: monsters that strike, and pieces their strikes hit. */
+  attacking?: ReadonlySet<string> | undefined;
+  hitting?: ReadonlySet<string> | undefined;
+  /** After Strike: a burst on each tile where something fell. */
+  bursts?: readonly { id: string; x: number; y: number; hero: boolean }[] | undefined;
   onTile?: ((x: number, y: number) => void) | undefined;
   label: string;
 };
@@ -203,9 +208,10 @@ export function Board(props: BoardProps) {
         return (
           <g
             key={unit.id}
-            className={`token${gone ? ' gone' : ''}${props.selected === unit.id ? ' selected' : ''}`}
+            className={`token${gone ? ' gone' : ''}${props.selected === unit.id ? ' selected' : ''}${props.attacking?.has(unit.id) ? ' attacking' : ''}${props.hitting?.has(unit.id) ? ' hit' : ''}`}
             style={{ transform: `translate(${x * T}px, ${y * T}px)` }}
           >
+            <g className="shaker">
             <g className="shape">
               <ellipse cx={cx} cy={cy + 34} rx="30" ry="8" fill="#000" opacity="0.35" />
               <circle className="ring" cx={cx} cy={cy} r="38" fill="#1b1420" stroke={ring} strokeWidth="5" />
@@ -220,6 +226,7 @@ export function Board(props: BoardProps) {
                   ))}
                 </g>
               )}
+            </g>
             </g>
             {!gone && props.doomed.has(unit.id) && (
               <g transform={`translate(${cx + 30} ${cy - 30})`}>
@@ -238,6 +245,14 @@ export function Board(props: BoardProps) {
           </g>
         );
       })}
+
+      {/* Where something fell: a burst of light */}
+      {(props.bursts ?? []).map((b) => (
+        <g key={`b${b.id}`} transform={`translate(${b.x * T + T / 2} ${b.y * T + T / 2})`}>
+          <circle className="burst" r="40" fill="none" stroke={b.hero ? '#ff6a5a' : '#ffd88a'} strokeWidth="6" />
+          <circle className="burst late" r="28" fill="none" stroke={b.hero ? '#ff8a6a' : '#fff1c8'} strokeWidth="3" />
+        </g>
+      ))}
 
       {/* Tap layer */}
       {props.onTile &&

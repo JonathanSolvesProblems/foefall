@@ -75,6 +75,12 @@ Then an exhaustive solver (`src/shared/engine/solver.ts`) plays every order of h
 
 The server replays every claimed turn with the same rules engine before recording it, so the client's verdict is never trusted.
 
+## Data
+
+Forewarned stores, per player, a try count, the ways they found, a streak and a nation, and per day the first finder of each way and the first clears. Following the Devvit Rules, every key that holds a username, user id or avatar expires 30 days after its last write, and deleting a trial's post removes what the app stored about that post. No data leaves Reddit.
+
+On a test subreddit (name ending in `_dev`), every upload runs a self-check on Reddit: it plays a known winning line for today's trial as a throwaway player on a scratch day, through the real Devvit Redis, and logs `[selftest] ok` or `[selftest] FAIL` with the reason.
+
 ## Layout
 
 | Path | What it is |

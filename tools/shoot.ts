@@ -83,6 +83,10 @@ async function run(viewport: { width: number; height: number }, tag: string) {
   await playLine(page, s.puzzle, ways[0]!.line);
   await page.screenshot({ path: `${OUT}/${tag}-09-daily-ready.png` });
   await page.getByRole('button', { name: 'Strike' }).click();
+  await page.waitForTimeout(420);
+  await page.screenshot({ path: `${OUT}/${tag}-09b-daily-striking.png` });
+  await page.waitForTimeout(560);
+  await page.screenshot({ path: `${OUT}/${tag}-09c-daily-falling.png` });
   await page.waitForSelector('.sheet');
   await page.waitForTimeout(400);
   await page.screenshot({ path: `${OUT}/${tag}-10-daily-win.png`, fullPage: false });

@@ -14,6 +14,7 @@ export const kv: KV = {
   hIncrBy: (k, f, by) => redis.hIncrBy(k, f, by),
   zAdd: (k, ...m) => redis.zAdd(k, ...m),
   zRange: (k, start, stop, options) => redis.zRange(k, start, stop, options ?? { by: 'rank' }),
+  expire: (k, seconds) => redis.expire(k, seconds),
 };
 
 export const today = () => dayNumber(Date.now());
