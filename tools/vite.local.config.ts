@@ -86,5 +86,5 @@ export default defineConfig({
       '@devvit/analytics/client/reddit': resolve('tools/local/analytics.ts'),
     },
   },
-  server: { port: 5199, strictPort: true },
+  server: { host: '127.0.0.1', port: 5199, strictPort: true },
 });

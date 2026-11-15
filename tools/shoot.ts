@@ -8,7 +8,7 @@ import { solve } from '../src/shared/engine/solver';
 import { trialFor, type SeasonDay } from '../src/shared/game';
 import { WARMUP } from '../src/shared/trials/warmup';
 
-const BASE = 'http://localhost:5199';
+const BASE = 'http://127.0.0.1:5199';
 const OUT = 'tools/shots';
 mkdirSync(OUT, { recursive: true });
 const season = JSON.parse(readFileSync('src/server/season.json', 'utf8')) as SeasonDay[];

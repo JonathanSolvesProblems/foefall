@@ -250,6 +250,9 @@ export function HelpSheet(props: { onClose: () => void; puzzle: Puzzle }) {
   return (
     <div className="sheet-backdrop" onClick={props.onClose}>
       <div className="sheet" role="dialog" aria-label="How to play" onClick={(e) => e.stopPropagation()}>
+        <button className="sheet-close" aria-label="Close help" onClick={props.onClose}>
+          ×
+        </button>
         <h2 className="wordmark">How to play</h2>
         <p className="lede">
           Every monster shows the tiles it will strike. Move each hero once and use its ability. Then press Strike: every monster strikes at the same
