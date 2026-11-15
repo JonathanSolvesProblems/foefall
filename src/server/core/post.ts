@@ -19,11 +19,11 @@ export async function postDay(day: number = today(), force = false): Promise<{ i
   const tier = TIERS[s.tier];
   const post = await reddit.submitCustomPost({
     subredditName: context.subredditName,
-    title: `Forewarned #${day} · ${tier.moon} · ${tier.feel}`,
+    title: `Foefall #${day} · ${tier.moon} · ${tier.feel}`,
     entry: 'default',
     postData: { day },
     textFallback: {
-      text: `Forewarned #${day} is a daily tactics puzzle that plays inside this post. If you only see this text, your Reddit app is too old to show it: update the app, or open the post on reddit.com in a browser.`,
+      text: `Foefall #${day} is a daily tactics puzzle that plays inside this post. If you only see this text, your Reddit app is too old to show it: update the app, or open the post on reddit.com in a browser.`,
     },
   });
   await redis.set(`fw:post:${post.id}`, String(day));

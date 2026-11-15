@@ -1,6 +1,6 @@
 {
   "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
-  "name": "forewarned-daily",
+  "name": "foefall",
   "marketingAssets": {
     "icon": "assets/icon.png"
   },
@@ -31,14 +31,14 @@
   "menu": {
     "items": [
       {
-        "label": "Forewarned: post today's trial",
+        "label": "Foefall: post today's trial",
         "description": "Posts today's trial if it is not up yet",
         "location": "subreddit",
         "forUserType": "moderator",
         "endpoint": "/internal/menu/post-today"
       },
       {
-        "label": "Forewarned: post a fresh copy of today's trial",
+        "label": "Foefall: post a fresh copy of today's trial",
         "description": "For testing: posts today's trial again",
         "location": "subreddit",
         "forUserType": "moderator",

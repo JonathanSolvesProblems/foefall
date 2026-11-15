@@ -150,7 +150,7 @@ export async function loadInit(
     day,
     date: s.date,
     tier: s.tier,
-    moon: f ? 'Forged trial' : tier.moon,
+    moon: f ? 'Player trial' : tier.moon,
     feel: f ? `${f.wayKeys.length} ${f.wayKeys.length === 1 ? 'way' : 'ways'}` : tier.feel,
     isToday: !f && day === opts.today,
     today: opts.today,

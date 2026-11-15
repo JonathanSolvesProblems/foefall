@@ -1,4 +1,4 @@
-// Forewarned rules engine. Pure and deterministic: the client runs it for the live forecast, the server runs it to check
+// Foefall rules engine. Pure and deterministic: the client runs it for the live forecast, the server runs it to check
 // every claimed win, and the solver runs it to prove each daily trial can be won and to count its ways.
 //
 // One turn, perfect information. Every monster shows the tiles it will strike. Each hero may move and then use one

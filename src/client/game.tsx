@@ -175,7 +175,7 @@ function Play(props: {
     mode === 'proof'
       ? 'Prove your trial: clear it yourself'
       : data?.forge
-        ? `Forged by u/${data.forge.author}${data.forge.title ? ` · ${data.forge.title}` : ''}`
+        ? `Built by u/${data.forge.author}${data.forge.title ? ` · ${data.forge.title}` : ''}`
         : data
           ? `#${data.day} · ${data.moon} · ${data.feel}${data.isToday ? '' : ' · past trial'}`
           : 'Warm-up · one move';
@@ -185,7 +185,7 @@ function Play(props: {
       <div className="topbar">
         <Moon size={38} />
         <div className="title">
-          <div className="wordmark">Forewarned</div>
+          <div className="wordmark">Foefall</div>
           <div className="sub">{sub}</div>
         </div>
         {mode === 'daily' && data && (

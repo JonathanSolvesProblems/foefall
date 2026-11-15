@@ -121,7 +121,7 @@ export type ResultProps = {
   proofWays?: number | undefined;
 };
 
-/** After clearing your own forged trial: name it and post it, or go back and change it. */
+/** After clearing your own trial: name it and post it, or go back and change it. */
 function ProofSheet(p: ResultProps) {
   const [title, setTitle] = useState('');
   const [posting, setPosting] = useState(false);
@@ -149,7 +149,7 @@ function ProofSheet(p: ResultProps) {
               Adjust moves
             </button>
             <button className="btn" onClick={p.onBackToForge}>
-              Back to the forge
+              Back to building
             </button>
           </div>
         </div>
@@ -178,7 +178,7 @@ function ProofSheet(p: ResultProps) {
                 {posting ? 'Posting…' : 'Post it'}
               </button>
               <button className="btn" disabled={posting} onClick={p.onBackToForge}>
-                Back to the forge
+                Back to building
               </button>
             </div>
           </>
@@ -354,7 +354,7 @@ export function ResultSheet(p: ResultProps) {
             </p>
             <div className="row">
               <button className="btn" onClick={p.onForge}>
-                Forge a trial
+                Build a trial
               </button>
             </div>
           </>

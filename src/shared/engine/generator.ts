@@ -420,7 +420,7 @@ function tryOnce(rng: Rng, tier: Tier, id: string): Generated | null {
 
 export type Dated = { day: number; date: string; tier: TierId };
 
-/** Day 1 is Sunday 15 November 2026, the day Forewarned's first trial went up. */
+/** Day 1 is Sunday 15 November 2026, the day the first trial went up. */
 export const EPOCH_UTC = Date.UTC(2026, 10, 15);
 const DAY_MS = 86_400_000;
 

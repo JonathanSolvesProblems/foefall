@@ -48,7 +48,7 @@ function Splash() {
         <header className="splash-head">
           <Moon size={54} className="splash-moon" />
           <div>
-            <div className="wordmark splash-word">Forewarned</div>
+            <div className="wordmark splash-word">Foefall</div>
             <div className="splash-sub">A daily tactics trial from the world of Orvandel</div>
           </div>
         </header>
@@ -75,8 +75,8 @@ function Splash() {
           <div className="splash-info">
             {data && (
               <>
-                <div className="display splash-day">{data.forge ? data.forge.title || 'A forged trial' : `#${data.day} · ${data.moon}`}</div>
-                <div className="splash-feel">{data.forge ? `Forged by u/${data.forge.author} · ${data.feel}` : data.feel}</div>
+                <div className="display splash-day">{data.forge ? data.forge.title || 'A trial by a redditor' : `#${data.day} · ${data.moon}`}</div>
+                <div className="splash-feel">{data.forge ? `Built by u/${data.forge.author} · ${data.feel}` : data.feel}</div>
                 <p className="splash-rule">Every monster shows where it will strike. Make them strike each other.</p>
                 <ul className="splash-stats">
                   {c && c.players > 0 ? (

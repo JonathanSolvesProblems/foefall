@@ -154,7 +154,7 @@ export function ForgeEditor(props: { initial: Puzzle; onProve: (p: Puzzle, ways:
       <div className="topbar">
         <Moon size={38} />
         <div className="title">
-          <div className="wordmark">Forge a trial</div>
+          <div className="wordmark">Build a trial</div>
           <div className="sub">{counts}</div>
         </div>
         <button className="icon-btn" aria-label="Back to the trial" onClick={props.onExit}>

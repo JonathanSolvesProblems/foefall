@@ -68,8 +68,8 @@ await playLine(page, s.puzzle, solve(s.puzzle).ways[0]!.line);
 await tapButton(page, 'Strike', true);
 await page.waitForSelector('.sheet');
 await page.waitForTimeout(300);
-if (!(await page.getByRole('button', { name: 'Forge a trial' }).count())) findings.push('no Forge a trial button on the win sheet');
-await tapButton(page, 'Forge a trial', true);
+if (!(await page.getByRole('button', { name: 'Build a trial' }).count())) findings.push('no Build a trial button on the win sheet');
+await tapButton(page, 'Build a trial', true);
 await page.waitForSelector('.palette');
 await page.screenshot({ path: `${OUT}/1-empty.png` });
 
@@ -107,7 +107,7 @@ await page.waitForSelector('.splash-board svg');
 await page.waitForTimeout(300);
 await page.screenshot({ path: `${OUT}/5-posted-card.png` });
 const card = (await page.locator('.splash-info').textContent()) ?? '';
-if (!card.includes('The Lantern Gate') || !card.includes(`Forged by u/${maker}`)) findings.push(`posted card does not show title and maker: "${card}"`);
+if (!card.includes('The Lantern Gate') || !card.includes(`Built by u/${maker}`)) findings.push(`posted card does not show title and maker: "${card}"`);
 
 // 4. Someone else plays the posted trial and wins it.
 const player = `hunter${Date.now() % 100000}`;
@@ -123,7 +123,7 @@ if (await page.locator('.coach').count()) {
   await page.waitForTimeout(300);
 }
 const sub = (await page.locator('.topbar .sub').textContent()) ?? '';
-if (!sub.includes(`Forged by u/${maker}`)) findings.push(`forged trial top bar does not credit the maker: "${sub}"`);
+if (!sub.includes(`Built by u/${maker}`)) findings.push(`forged trial top bar does not credit the maker: "${sub}"`);
 await tapTile(page, SIX, 0, 4);
 await tapTile(page, SIX, 0, 2);
 await tapTile(page, SIX, 1, 2);

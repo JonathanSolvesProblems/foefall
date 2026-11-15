@@ -98,7 +98,7 @@ api.post('/chalk', async (c) => {
   if (!me.solved) return c.json<ErrorResponse>(fail('Clear the trial first.'), 400);
   const nation = me.nation ? `${NATIONS[me.nation].sigil} ${NATIONS[me.nation].short}` : '';
   const streak = me.streak > 1 && !data.forge ? ` · ${me.streak}-day streak` : '';
-  const what = data.forge ? `the forged trial "${data.forge.title || 'Untitled'}"` : `Forewarned #${data.day} (${data.moon})`;
+  const what = data.forge ? `u/${data.forge.author}'s trial "${data.forge.title || 'Untitled'}"` : `Foefall #${data.day} (${data.moon})`;
   const lines = [
     `**u/${me.username}** cleared ${what} on try ${data.community.board.find((r) => r.name === me.username)?.tries ?? me.tries}${streak}${nation ? ` · ${nation}` : ''}.`,
     '',
@@ -137,7 +137,7 @@ api.post('/forge', async (c) => {
   const quotaKey = `fw:forgequota:${today()}:${who.userId}`;
   const used = await kv.incrBy(quotaKey, 1);
   await kv.expire(quotaKey, 2 * 86_400);
-  if (used > 3) return c.json<ErrorResponse>(fail('Three forged trials a day is the limit. Come back tomorrow.'), 429);
+  if (used > 3) return c.json<ErrorResponse>(fail('Three trials a day is the limit. Come back tomorrow.'), 429);
   const verdict = verifyForge(body.puzzle, body.proof);
   if ('error' in verdict) {
     await kv.incrBy(quotaKey, -1);
@@ -150,13 +150,13 @@ api.post('/forge', async (c) => {
     const ways = verdict.check.ways;
     const post = await reddit.submitCustomPost({
       subredditName: context.subredditName,
-      title: `Forged trial: ${title || 'Untitled'} · ${ways} ${ways === 1 ? 'way' : 'ways'} · by u/${who.username}`,
+      title: `Foefall trial by u/${who.username}: ${title || 'Untitled'} · ${ways} ${ways === 1 ? 'way' : 'ways'}`,
       entry: 'default',
       postData: { forge: id },
       runAs: 'USER',
-      userGeneratedContent: { text: title || 'Untitled forged trial' },
+      userGeneratedContent: { text: title || 'Untitled trial' },
       textFallback: {
-        text: `A Forewarned trial forged by u/${who.username}. It plays inside this post. If you only see this text, update the Reddit app or open the post on reddit.com in a browser.`,
+        text: `A Foefall trial built by u/${who.username}. It plays inside this post. If you only see this text, update the Reddit app or open the post on reddit.com in a browser.`,
       },
     });
     await kv.set(`fw:post:${post.id}`, `forge:${id}`);
