@@ -1,7 +1,7 @@
 {
   "private": true,
-  "name": "forewarned",
-  "version": "0.1.0",
+  "name": "forewarned-daily",
+  "version": "0.0.0",
   "license": "BSD-3-Clause",
   "type": "module",
   "scripts": {
@@ -21,7 +21,7 @@
     "node": ">=24.0.0"
   },
   "dependencies": {
-    "@devvit/analytics": "^0.15.3",
+    "@devvit/analytics": "0.15.3",
     "@devvit/start": "0.15.3",
     "@devvit/web": "0.15.3",
     "@fontsource/alegreya-sans": "^5.2.5",

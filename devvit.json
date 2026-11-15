@@ -1,6 +1,6 @@
 {
   "$schema": "https://developers.reddit.com/schema/config-file.v1.json",
-  "name": "forewarned",
+  "name": "forewarned-daily",
   "marketingAssets": {
     "icon": "assets/icon.png"
   },
@@ -61,5 +61,8 @@
   "scripts": {
     "dev": "vite build --watch",
     "build": "vite build"
+  },
+  "dev": {
+    "subreddit": "forewarned_daily_dev"
   }
 }
