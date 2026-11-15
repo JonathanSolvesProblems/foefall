@@ -166,20 +166,22 @@ export function ForgeEditor(props: { initial: Puzzle; onProve: (p: Puzzle, ways:
         <span className={check && !check.ok ? 'bad' : ''}>{status}</span>
       </div>
 
-      <div className="board-wrap forge-board">
-        <Board
-          puzzle={puzzle}
-          state={view.s}
-          strikes={view.strikes}
-          doomed={view.doomed}
-          danger={view.danger}
-          selected={null}
-          moveTiles={[]}
-          targetTiles={[]}
-          striking={false}
-          onTile={(x, y) => update(applyTool(puzzle, tool, x, y))}
-          label="Forge board"
-        />
+      <div className="board-slot">
+        <div className="board-wrap forge-board">
+          <Board
+            puzzle={puzzle}
+            state={view.s}
+            strikes={view.strikes}
+            doomed={view.doomed}
+            danger={view.danger}
+            selected={null}
+            moveTiles={[]}
+            targetTiles={[]}
+            striking={false}
+            onTile={(x, y) => update(applyTool(puzzle, tool, x, y))}
+            label="Forge board"
+          />
+        </div>
       </div>
 
       <div className="palette" role="toolbar" aria-label="Pieces">

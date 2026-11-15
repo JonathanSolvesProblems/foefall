@@ -258,23 +258,25 @@ function Play(props: {
         </div>
       )}
 
-      <div className="board-wrap">
-        <Board
-          puzzle={puzzle}
-          state={showState}
-          strikes={phase === 'result' || endState ? [] : t.strikes}
-          doomed={planning ? t.doomed : new Set()}
-          danger={planning ? t.danger : new Set()}
-          selected={planning ? t.selected : null}
-          moveTiles={planning ? t.moveTiles : []}
-          targetTiles={planning ? t.targetTiles : []}
-          striking={phase === 'striking' && !endState}
-          attacking={fx?.attacking}
-          hitting={fx?.hitting}
-          bursts={fx?.bursts}
-          onTile={onTile}
-          label={`Trial board, ${puzzle.w} by ${puzzle.h}`}
-        />
+      <div className="board-slot">
+        <div className="board-wrap">
+          <Board
+            puzzle={puzzle}
+            state={showState}
+            strikes={phase === 'result' || endState ? [] : t.strikes}
+            doomed={planning ? t.doomed : new Set()}
+            danger={planning ? t.danger : new Set()}
+            selected={planning ? t.selected : null}
+            moveTiles={planning ? t.moveTiles : []}
+            targetTiles={planning ? t.targetTiles : []}
+            striking={phase === 'striking' && !endState}
+            attacking={fx?.attacking}
+            hitting={fx?.hitting}
+            bursts={fx?.bursts}
+            onTile={onTile}
+            label={`Trial board, ${puzzle.w} by ${puzzle.h}`}
+          />
+        </div>
       </div>
 
       {/* Always present outside the warm-up, so the board above does not move when a hint comes or goes. */}
