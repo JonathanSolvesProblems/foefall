@@ -191,7 +191,8 @@ button {
 /* Room for two lines, the most a hint takes on a narrow phone. */
 .hint {
   width: 100%;
-  min-height: 34px;
+  height: 34px;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -241,8 +242,10 @@ button {
 
 .forecast {
   width: 100%;
-  /* Same height as the coach line, so the board does not jump when one replaces the other. */
-  min-height: 64px;
+  /* A fixed height, the same as the coach line's: the board sits in the space left over, so any change in this
+     row's height would move it under the player's finger. Three lines fit on a 360 px phone. */
+  height: 80px;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -270,7 +273,8 @@ button {
 
 .coach {
   width: 100%;
-  min-height: 64px;
+  height: 80px;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -371,9 +375,6 @@ button {
   }
   .hero-card .blurb {
     display: block;
-  }
-  .forecast {
-    min-height: 64px;
   }
 }
 
@@ -1017,4 +1018,10 @@ button {
   .striking .strike-tile {
     animation: none;
   }
+}
+
+.next-trial {
+  margin: 8px 0 0;
+  text-align: center;
+  font-size: 13px;
 }

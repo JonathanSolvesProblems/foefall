@@ -49,6 +49,9 @@ function Play(props: {
   const [result, setResult] = useState<{ outcome: Outcome; server: AttemptResponse | null } | null>(null);
   const [help, setHelp] = useState(false);
   const [busy, setBusy] = useState(false);
+  // Ways found when the player last left a chalk mark here (null: use the server's count), and whether they joined.
+  const [chalkedAt, setChalkedAt] = useState<number | null>(null);
+  const [joined, setJoined] = useState(false);
   const [muted, setMuted] = useState(sfx.isMuted());
   // A player who has not tried this trial yet hears about the hunt once, until their first tap.
   const [intro, setIntro] = useState(mode === 'daily' && !!data && data.me.tries === 0 && !data.me.solved);
@@ -136,6 +139,7 @@ function Play(props: {
     setBusy(true);
     try {
       props.toast((await api.chalk()).message);
+      setChalkedAt(result?.server?.me.ways.length ?? data?.me.ways.length ?? 0);
       journey.interaction('chalk_mark');
     } catch (e) {
       props.toast((e as Error).message);
@@ -147,6 +151,7 @@ function Play(props: {
     setBusy(true);
     try {
       props.toast((await api.subscribe()).message);
+      setJoined(true);
       journey.interaction('subscribe');
     } catch (e) {
       props.toast((e as Error).message);
@@ -332,7 +337,9 @@ function Play(props: {
           onBeginDaily={props.onBeginDaily}
           onNation={pick}
           onChalk={chalk}
+          chalkedAt={chalkedAt}
           onJoin={join}
+          joined={joined}
           onForge={props.onForge}
           onPublish={props.onPublish ? (title: string) => props.onPublish!(t.actions, title) : undefined}
           onBackToForge={props.onBackToForge}

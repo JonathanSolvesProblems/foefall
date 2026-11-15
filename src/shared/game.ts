@@ -70,7 +70,7 @@ const isNation = (v: string | undefined): v is Nation => !!v && (NATION_LIST as 
 
 async function loadMe(kv: KV, day: number, today: number, who: Who): Promise<Me> {
   if (!who.userId) {
-    return { username: null, tries: 0, solved: false, ways: [], streak: 0, best: 0, nation: null, firstVisit: true };
+    return { username: null, tries: 0, solved: false, ways: [], streak: 0, best: 0, nation: null, firstVisit: true, chalked: 0 };
   }
   const [u, du] = await Promise.all([kv.hGetAll(K.user(who.userId)), kv.hGetAll(K.dayUser(day, who.userId))]);
   const last = num(u.last);
@@ -84,7 +84,17 @@ async function loadMe(kv: KV, day: number, today: number, who: Who): Promise<Me>
     best: num(u.best),
     nation: isNation(u.nation) ? u.nation : null,
     firstVisit: u.seen !== '1',
+    chalked: num(du.chalked),
   };
+}
+
+/**
+ * Record a chalk mark. One per player per trial, plus one more each time they find another way, so the thread never
+ * carries the same result twice. The field lives in the player's day record, which expires with it.
+ */
+export async function markChalked(kv: KV, day: number, userId: string, ways: number): Promise<void> {
+  await kv.hSet(K.dayUser(day, userId), { chalked: String(ways) });
+  await kv.expire(K.dayUser(day, userId), RETENTION_SECONDS);
 }
 
 async function loadCommunity(kv: KV, s: SeasonDay, myWays: string[]): Promise<Community> {

@@ -76,7 +76,15 @@ function mockApi(): Plugin {
           const id = await game.saveForge(store, { title: forgeMod.cleanTitle(body.title), author: who.username, puzzle: v.puzzle, wayKeys: v.check.wayKeys });
           return send(200, { type: 'forge', id, postId: `t3_local${id}`, url: `/splash.html?user=${user}&forge=${id}` });
         }
-        if (path === '/api/chalk') return send(200, { type: 'ok', message: 'Chalk mark left in the comments.' });
+        if (path === '/api/chalk') {
+          // Same rule as the server: one chalk mark per trial, and one more per newly found way. No comment is posted.
+          if (!who.userId) return send(401, { type: 'error', message: 'Log in to leave a chalk mark.' });
+          const init = await game.loadInit(store, season, { day, today, who, forge, subreddit: 'forewarned_dev' });
+          if (!init.me.solved) return send(400, { type: 'error', message: 'Clear the trial first.' });
+          if (init.me.chalked >= init.me.ways.length) return send(409, { type: 'error', message: 'Your chalk mark is already in the thread. Find another way to leave a new one.' });
+          await game.markChalked(store, init.day, who.userId, init.me.ways.length);
+          return send(200, { type: 'ok', message: 'Chalk mark left in the comments.' });
+        }
         if (path === '/api/subscribe') return send(200, { type: 'ok', message: 'Joined r/forewarned_dev.' });
         return send(404, { type: 'error', message: 'not found' });
         } catch (e) {

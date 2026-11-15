@@ -136,6 +136,18 @@ async function run(tag: string, viewport: { width: number; height: number }, dpr
   // The result sheet itself may scroll inside, but the page must not.
   await fits(page, `${tag} result`);
 
+  // Next steps: a chalk mark is left once (the button says so and the server refuses a repeat), and Join confirms.
+  await tapButton(page, 'Leave a chalk mark');
+  await page.waitForTimeout(300);
+  const chalkBtn = page.getByRole('button', { name: 'Chalk mark left' });
+  if (!(await chalkBtn.count()) || !(await chalkBtn.isDisabled())) findings.push(`${tag}: the chalk mark button did not change to a disabled "Chalk mark left"`);
+  const again = await page.evaluate(async () => (await fetch(`/api/chalk${location.search}`, { method: 'POST' })).status);
+  if (again !== 409) findings.push(`${tag}: a second chalk mark for the same ways was not refused (status ${again})`);
+  await tapButton(page, /^Join r\//);
+  await page.waitForTimeout(300);
+  if (!(await page.getByRole('button', { name: /^Joined r\// }).count())) findings.push(`${tag}: Join did not confirm`);
+  if (!(await page.locator('.next-trial').textContent())?.match(/next trial goes up in \d/)) findings.push(`${tag}: no time for the next trial on the win sheet`);
+
   // Help sheet opens over the game and closes.
   await page.goto(`${BASE}/game.html?user=${user}`);
   await page.waitForSelector('.board-wrap svg');

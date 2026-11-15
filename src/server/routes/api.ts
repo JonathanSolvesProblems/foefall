@@ -13,7 +13,7 @@ import {
   type OkResponse,
 } from '../../shared/api';
 import { cleanTitle, verifyForge } from '../../shared/forge';
-import { flairText, loadInit, markSeen, recordAttempt, RETENTION_SECONDS, saveForge, setNation } from '../../shared/game';
+import { flairText, loadInit, markChalked, markSeen, recordAttempt, RETENTION_SECONDS, saveForge, setNation } from '../../shared/game';
 import { currentWho, kv, season, today, trialForPost } from '../core/context';
 import { flairPost, PLAYER_FLAIR } from '../core/post';
 
@@ -97,6 +97,7 @@ api.post('/chalk', async (c) => {
   const data = await init();
   const me = data.me;
   if (!me.solved) return c.json<ErrorResponse>(fail('Clear the trial first.'), 400);
+  if (me.chalked >= me.ways.length) return c.json<ErrorResponse>(fail('Your chalk mark is already in the thread. Find another way to leave a new one.'), 409);
   const nation = me.nation ? `${NATIONS[me.nation].sigil} ${NATIONS[me.nation].short}` : '';
   const streak = me.streak > 1 && !data.forge ? ` · ${me.streak}-day streak` : '';
   const what = data.forge ? `u/${data.forge.author}'s trial "${data.forge.title || 'Untitled'}"` : `Foefall #${data.day} (${data.moon})`;
@@ -107,6 +108,7 @@ api.post('/chalk', async (c) => {
   ];
   try {
     await reddit.submitComment({ id: context.postId, text: lines.join('\n'), runAs: 'USER' });
+    await markChalked(kv, data.day, who.userId, me.ways.length);
     return c.json<OkResponse>({ type: 'ok', message: 'Chalk mark left in the comments.' });
   } catch (e) {
     console.error('chalk failed', e);

@@ -1,4 +1,5 @@
 import { showLoginPrompt, showShareSheet } from '@devvit/web/client';
+import { untilNextTrial } from '../lib/time';
 import { useState } from 'react';
 import {
   type AttemptResponse,
@@ -133,7 +134,10 @@ export type ResultProps = {
   onBeginDaily: () => void;
   onNation: (n: Nation) => void;
   onChalk: () => void;
+  /** Ways found when the player last left a chalk mark in this session; the server's count otherwise. */
+  chalkedAt?: number | null | undefined;
   onJoin: () => void;
+  joined?: boolean | undefined;
   onForge?: (() => void) | undefined;
   onPublish?: ((title: string) => Promise<void>) | undefined;
   onBackToForge?: (() => void) | undefined;
@@ -260,6 +264,8 @@ export function ResultSheet(p: ResultProps) {
   const wayIndex = community
     ? community.ways.findIndex((w) => w.key === outcome.wayKey) + 1
     : 0;
+  const chalked = mineCount > 0 && (p.chalkedAt ?? me?.chalked ?? 0) >= mineCount;
+  const sub = p.data?.subreddit ?? 'the trials';
 
   // Spoiler-free: the try count and the hunt, never the way itself.
   const share = () => {
@@ -350,21 +356,34 @@ export function ResultSheet(p: ResultProps) {
             </button>
           </div>
         )}
+        {/* The next steps, together: keep hunting or mark the thread, then come back tomorrow. */}
         <div className="row" style={{ marginTop: 10 }}>
-          {mineCount < total && (
+          {mineCount < total ? (
             <button className="btn primary" onClick={p.onAgain}>
               Hunt another way
             </button>
+          ) : (
+            <button className="btn" onClick={p.onAgain}>
+              Play it again
+            </button>
           )}
           {p.server?.saved && (
-            <button className="btn" disabled={p.busy} onClick={p.onChalk}>
-              Leave a chalk mark
+            <button className="btn" disabled={p.busy || chalked} onClick={p.onChalk}>
+              {chalked ? 'Chalk mark left' : 'Leave a chalk mark'}
+            </button>
+          )}
+        </div>
+        <div className="row" style={{ marginTop: 8 }}>
+          {p.server?.saved && (
+            <button className="btn" disabled={p.busy || p.joined} onClick={p.onJoin}>
+              {p.joined ? `Joined r/${sub}` : `Join r/${sub}`}
             </button>
           )}
           <button className="btn" onClick={share}>
             Share
           </button>
         </div>
+        <p className="muted next-trial">The next trial goes up in {untilNextTrial()}.</p>
         {community && (
           <>
             <h3>
@@ -413,21 +432,6 @@ export function ResultSheet(p: ResultProps) {
             </ol>
           </>
         )}
-        {p.server?.saved && (
-          <div className="row" style={{ marginTop: 12 }}>
-            <button className="btn ghost" disabled={p.busy} onClick={p.onJoin}>
-              Join r/{p.data?.subreddit ?? 'the trials'} for tomorrow&apos;s
-              trial
-            </button>
-          </div>
-        )}
-        {mineCount >= total && (
-          <div className="row" style={{ marginTop: 8 }}>
-            <button className="btn" onClick={p.onAgain}>
-              Play it again
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
@@ -442,6 +446,7 @@ const emptyMe: Me = {
   best: 0,
   nation: null,
   firstVisit: false,
+  chalked: 0,
 };
 
 export function HelpSheet(props: { onClose: () => void; puzzle: Puzzle }) {
