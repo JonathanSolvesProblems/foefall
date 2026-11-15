@@ -175,7 +175,7 @@ export function Board(props: BoardProps) {
       {state.lamps.map((l) => (
         <g key={l.id}>
           {l.lit && <circle cx={l.x * T + T / 2} cy={l.y * T + T / 2} r="48" fill="url(#lampglow)" />}
-          <Glyph name="lanternFlame" cx={l.x * T + T / 2} cy={l.y * T + T / 2} size={58} fill={l.lit ? '#ffd88a' : '#6f6579'} />
+          <Glyph name="lanternFlame" cx={l.x * T + T / 2} cy={l.y * T + T / 2} size={58} fill={l.lit ? '#ffd88a' : '#958b9d'} />
           {props.danger.has(l.id) && (
             <circle className="danger-ring" cx={l.x * T + T / 2} cy={l.y * T + T / 2} r="42" fill="none" stroke="#ff6a5a" strokeWidth="5" />
           )}

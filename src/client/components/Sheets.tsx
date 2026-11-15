@@ -488,14 +488,12 @@ export function HelpSheet(props: { onClose: () => void; puzzle: Puzzle }) {
         <h3>The monsters</h3>
         <div className="help-grid">
           {[...mobs, ...allMobs].map((m) => (
-            <div
-              key={m}
-              className="help-item"
-              style={{ opacity: mobs.includes(m) ? 1 : 0.6 }}
-            >
-              <IconBadge name={MOB_ICON[m]} ring="#d1543f" fill="#efe6d2" />
+            // A monster that is not on today's board dims its icon only and says so; its text stays readable.
+            <div key={m} className={`help-item${mobs.includes(m) ? '' : ' absent'}`}>
+              <IconBadge name={MOB_ICON[m]} ring="#d1543f" fill="#efe6d2" dim={!mobs.includes(m)} />
               <div>
                 <span className="t">{MOBS[m].name}</span> · {MOBS[m].attack}
+                {!mobs.includes(m) && <span className="absent-tag">not today</span>}
                 <div className="muted">{MOBS[m].blurb}</div>
               </div>
             </div>

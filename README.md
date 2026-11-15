@@ -16,8 +16,9 @@ Requires Node 24 or newer and a Reddit account with [Devvit](https://developers.
 npm install
 npm test              # rules, solver, every scheduled trial, and the game state
 npm run local         # local preview at http://127.0.0.1:5199/splash.html?user=you (mock Reddit, real game logic)
-npx tsx tools/device-check.ts   # touch play at three phone sizes plus a logged-out player (needs npm run local)
+npx tsx tools/device-check.ts   # touch play at three phone sizes and a laptop window, plus a logged-out player (needs npm run local)
 npx tsx tools/forge-check.ts    # build, prove, post and play a player-built trial (needs npm run local)
+npx tsx tools/a11y-check.ts     # axe (WCAG 2.1 AA) on every screen, plus contrast sampled behind the glyphs where axe cannot measure (needs npm run local)
 npx devvit login
 npm run dev           # devvit playtest in your test subreddit
 npm run deploy        # type-check, test, devvit upload

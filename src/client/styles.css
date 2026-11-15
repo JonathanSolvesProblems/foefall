@@ -17,7 +17,7 @@
   --moon: #ece4cf;
   --ink: #efe8d8;
   --muted: #a99fb5;
-  --dim: #6f6579;
+  --dim: #958b9d; /* 4.9:1 on the darkest card, the WCAG AA floor for 12px text is 4.5:1 */
   --ember: #e0583f;
   --ember-hi: #ff8a6a;
   --ok: #7fd49a;
@@ -35,6 +35,12 @@ body,
 #root {
   height: 100%;
   margin: 0;
+}
+
+/* Pinch zoom stays available (accessibility), but double-tap zoom is off everywhere, so quick taps on the board
+   never zoom the page. touch-action applies to every element below the root. */
+html {
+  touch-action: manipulation;
 }
 
 body {
@@ -811,6 +817,18 @@ button {
   background: var(--night-2);
   border: 1px solid #2a2132;
   font-size: 14px;
+}
+
+.absent-tag {
+  margin-left: 6px;
+  padding: 0 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
 }
 
 .help-item .t {
