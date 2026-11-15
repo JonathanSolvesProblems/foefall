@@ -50,6 +50,8 @@ function Play(props: {
   const [help, setHelp] = useState(false);
   const [busy, setBusy] = useState(false);
   const [muted, setMuted] = useState(sfx.isMuted());
+  // A player who has not tried this trial yet hears about the hunt once, until their first tap.
+  const [intro, setIntro] = useState(mode === 'daily' && !!data && data.me.tries === 0 && !data.me.solved);
   const [fx, setFx] = useState<{
     attacking: Set<string>;
     hitting: Set<string>;
@@ -109,6 +111,7 @@ function Play(props: {
   const onTile = (x: number, y: number) => {
     if (phase !== 'plan') return;
     journey.start();
+    setIntro(false);
     const r = t.tap(x, y);
     if (r === 'select') sfx.select();
     else if (r === 'move') sfx.step();
@@ -167,6 +170,16 @@ function Play(props: {
     else if (t.pending && t.targetTiles.length > 0) coach = 'Now tap the ringed Wolf to shove it into the Boar.';
     else if (t.selected) coach = 'Red tiles are where the monsters strike. Walk to a gold dot beside the Wolf, on its left.';
     else coach = 'Tap your Vanguard.';
+  }
+  if (!coach && intro && planning && data) {
+    const n = data.community.waysTotal;
+    const found = data.community.ways.length;
+    const ways = n === 1 ? 'one way' : `${n} ways`;
+    coach = data.forge
+      ? `u/${data.forge.author} built this one. It can be won ${ways}: find one, then hunt the rest.`
+      : found >= n && n > 0
+        ? `This trial can be won ${ways}, and r/${data.subreddit} has found every one. Can you?`
+        : `This trial can be won ${ways}. Win it any way you can, then hunt the rest with r/${data.subreddit}${found ? ` (${found} found so far)` : ''}.`;
   }
 
   let hint: string | null = null;
