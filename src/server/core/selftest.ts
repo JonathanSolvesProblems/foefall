@@ -6,7 +6,7 @@ import { solve } from '../../shared/engine/solver';
 import { verifyForge } from '../../shared/forge';
 import { loadForge, loadInit, recordAttempt, saveForge, trialFor } from '../../shared/game';
 import { kv, season, today } from './context';
-
+import { dayFlair, flairPost } from './post';
 
 export async function selfTest(): Promise<string> {
   const t0 = Date.now();
@@ -66,8 +66,14 @@ export async function selfTest(): Promise<string> {
   let post = 'no post recorded for today';
   if (postId && postId !== 'pending') {
     try {
+      // Re-apply today's flair (the same text every time) and read it back, so each upload proves post flair works.
+      const want = dayFlair(day).text;
+      const flaired = await flairPost(postId, dayFlair(day));
       const p = await reddit.getPostById(postId as `t3_${string}`);
-      post = `post ${p.id} "${p.title}"`;
+      const got = p.flair?.text ?? '';
+      if (!flaired) problems.push('post flair could not be set');
+      else if (got !== want) problems.push(`post flair reads "${got}", expected "${want}"`);
+      post = `post ${p.id} "${p.title}" flaired "${got}"`;
     } catch (e) {
       problems.push(`today's post ${postId} could not be read: ${(e as Error).message}`);
     }

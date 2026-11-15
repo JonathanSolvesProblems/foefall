@@ -63,7 +63,7 @@ First-time players get a one-move warm-up with hints before the day's trial.
 - **Nations and flair.** Pick one of Orvandel's four nations after your first clear. Your nation and streak become your user flair, and every clear adds to your nation's tally for the day.
 - **Streaks.** A streak counts consecutive days you cleared that day's trial.
 - **First to clear.** Each post has a leaderboard of the day's first clears, by tries.
-- **Daily posts.** The scheduler posts the new trial every day at 00:01 UTC; old posts stay playable but do not count toward streaks.
+- **Daily posts.** The scheduler posts the new trial every day at 00:01 UTC; old posts stay playable but do not count toward streaks. Each post gets flair: "Daily · Gentle" through "Daily · Fiendish", coloured by difficulty, or "Built by a player", so the subreddit can filter by either.
 - **Journeys.** The game reports Devvit Journeys events: app ready, journey start on the first action, progress per hero action, interactions (undo, help, chalk mark), and journey end with the win and try count.
 
 ## How the trials are made

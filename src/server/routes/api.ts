@@ -15,6 +15,7 @@ import {
 import { cleanTitle, verifyForge } from '../../shared/forge';
 import { flairText, loadInit, markSeen, recordAttempt, RETENTION_SECONDS, saveForge, setNation } from '../../shared/game';
 import { currentWho, kv, season, today, trialForPost } from '../core/context';
+import { flairPost, PLAYER_FLAIR } from '../core/post';
 
 export const api = new Hono();
 
@@ -161,6 +162,7 @@ api.post('/forge', async (c) => {
     });
     await kv.set(`fw:post:${post.id}`, `forge:${id}`);
     await kv.expire(`fw:forge:${id}:author`, RETENTION_SECONDS);
+    await flairPost(post.id, PLAYER_FLAIR);
     return c.json<ForgeResponse>({ type: 'forge', id, postId: post.id, url: `https://reddit.com/r/${context.subredditName}/comments/${post.id.replace(/^t3_/, '')}` });
   } catch (e) {
     console.error('forge post failed', e);
