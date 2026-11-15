@@ -243,6 +243,7 @@ function Play(props: {
                 <span className="ability" style={{ display: 'block' }}>
                   {fallen ? 'Fallen' : done ? 'Done' : CLASSES[h.cls].ability}
                 </span>
+                {!fallen && !done && <span className="blurb">{CLASSES[h.cls].blurb}</span>}
               </span>
             </button>
           );

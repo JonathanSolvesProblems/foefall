@@ -320,6 +320,28 @@ button {
   line-height: 1.15;
 }
 
+.hero-card .blurb {
+  display: none;
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.2;
+  color: var(--dim);
+}
+
+/* Tall phones: spend the spare height on teaching, not on empty bands. */
+@media (min-height: 740px) {
+  .hero-card {
+    align-items: flex-start;
+    padding: 8px 10px;
+  }
+  .hero-card .blurb {
+    display: block;
+  }
+  .forecast {
+    min-height: 46px;
+  }
+}
+
 .hero-card .badge {
   width: 34px;
   height: 34px;
@@ -479,7 +501,8 @@ button {
 }
 
 .codex .slot {
-  flex: 1 1 120px;
+  flex: 1 1 calc(50% - 4px);
+  max-width: calc(50% - 4px);
   display: flex;
   align-items: center;
   gap: 8px;

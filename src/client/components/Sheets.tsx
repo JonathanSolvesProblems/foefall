@@ -1,13 +1,37 @@
+import { showLoginPrompt } from '@devvit/web/client';
 import { useState } from 'react';
-import { type AttemptResponse, type Community, type InitResponse, type Me, NATIONS, NATION_LIST, type Nation } from '../../shared/api';
+import {
+  type AttemptResponse,
+  type Community,
+  type InitResponse,
+  type Me,
+  NATIONS,
+  NATION_LIST,
+  type Nation,
+} from '../../shared/api';
 import { waySentences } from '../../shared/describe';
-import { CLASSES, type ClassId, MOBS, type MobId, type Outcome, type Puzzle } from '../../shared/engine/rules';
+import {
+  CLASSES,
+  type ClassId,
+  MOBS,
+  type MobId,
+  type Outcome,
+  type Puzzle,
+} from '../../shared/engine/rules';
 import { CLASS_ICON, IconBadge, MOB_ICON } from './art';
 
 function Avatar(props: { src: string | null; name: string }) {
   const [broken, setBroken] = useState(false);
-  if (!props.src || broken) return <span className="avatar">{props.name.charAt(0).toUpperCase()}</span>;
-  return <img className="avatar" src={props.src} alt="" onError={() => setBroken(true)} />;
+  if (!props.src || broken)
+    return <span className="avatar">{props.name.charAt(0).toUpperCase()}</span>;
+  return (
+    <img
+      className="avatar"
+      src={props.src}
+      alt=""
+      onError={() => setBroken(true)}
+    />
+  );
 }
 
 export function Codex(props: { community: Community; me: Me }) {
@@ -16,16 +40,19 @@ export function Codex(props: { community: Community; me: Me }) {
   return (
     <div className="codex">
       {community.ways.map((w, i) => (
-        <div key={w.key} className={`slot${w.mine ? ' mine' : ''}`} title={w.mine ? 'You found this way' : undefined}>
+        <div
+          key={w.key}
+          className={`slot${w.mine ? ' mine' : ''}`}
+          title={w.mine ? 'You found this way' : undefined}
+        >
           <Avatar src={w.finderAvatar} name={w.finder} />
           <div className="who">
             <div>
               Way {i + 1}
               {w.mine ? ' · yours' : ''}
+              <span className="muted"> · {w.count} found</span>
             </div>
-            <div className="muted">
-              u/{w.finder} first · {w.count} found
-            </div>
+            <div className="muted">first: u/{w.finder}</div>
           </div>
         </div>
       ))}
@@ -44,11 +71,17 @@ function NationPicker(props: { onPick: (n: Nation) => void; busy: boolean }) {
     <>
       <h3>Fight for a nation</h3>
       <p className="muted" style={{ margin: '0 0 8px', fontSize: 14 }}>
-        Your nation and streak become your flair here. Every clear adds to your nation&apos;s tally.
+        Your nation and streak become your flair here. Every clear adds to your
+        nation&apos;s tally.
       </p>
       <div className="nations">
         {NATION_LIST.map((n) => (
-          <button key={n} className="nation" disabled={props.busy} onClick={() => props.onPick(n)}>
+          <button
+            key={n}
+            className="nation"
+            disabled={props.busy}
+            onClick={() => props.onPick(n)}
+          >
             <span className="sigil" style={{ background: NATIONS[n].color }}>
               {NATIONS[n].sigil}
             </span>
@@ -61,9 +94,12 @@ function NationPicker(props: { onPick: (n: Nation) => void; busy: boolean }) {
 }
 
 function lossTitle(o: Outcome): string {
-  if (o.heroesLost > 0) return o.heroesLost > 1 ? 'Your heroes fell' : 'A hero fell';
+  if (o.heroesLost > 0)
+    return o.heroesLost > 1 ? 'Your heroes fell' : 'A hero fell';
   if (o.lampsOut > 0) return 'The lamp went out';
-  return o.enemiesLeft === 1 ? 'One still stands' : `${o.enemiesLeft} still stand`;
+  return o.enemiesLeft === 1
+    ? 'One still stands'
+    : `${o.enemiesLeft} still stand`;
 }
 
 export type ResultProps = {
@@ -91,7 +127,8 @@ export function ResultSheet(p: ResultProps) {
             <>
               <h2 className="wordmark">That is the whole game</h2>
               <p className="lede">
-                Make every strike land on a monster. Keep your heroes and lamps out of the red. A new trial rises with the moon each day, and
+                Make every strike land on a monster. Keep your heroes and lamps
+                out of the red. A new trial rises with the moon each day, and
                 the subreddit hunts every way to win it.
               </p>
               <div className="row" style={{ marginTop: 16 }}>
@@ -103,7 +140,10 @@ export function ResultSheet(p: ResultProps) {
           ) : (
             <>
               <h2>{lossTitle(outcome)}</h2>
-              <p className="lede">Shove the Wolf one step toward the Boar, so each one&apos;s strike lands on the other.</p>
+              <p className="lede">
+                Shove the Wolf one step toward the Boar, so each one&apos;s
+                strike lands on the other.
+              </p>
               <div className="row" style={{ marginTop: 16 }}>
                 <button className="btn primary" onClick={p.onAgain}>
                   Try again
@@ -120,14 +160,19 @@ export function ResultSheet(p: ResultProps) {
   const community = p.server?.community ?? p.data?.community ?? null;
   const total = community?.waysTotal ?? 0;
   const mineCount = me?.ways.length ?? 0;
-  const wayIndex = community ? community.ways.findIndex((w) => w.key === outcome.wayKey) + 1 : 0;
+  const wayIndex = community
+    ? community.ways.findIndex((w) => w.key === outcome.wayKey) + 1
+    : 0;
 
   if (!outcome.win) {
     return (
       <div className="sheet-backdrop">
         <div className="sheet" role="dialog" aria-label="Result">
           <h2>{lossTitle(outcome)}</h2>
-          <p className="lede">Every strike shows before it lands. Read the red tiles again: a monster that is struck falls, so make them strike each other.</p>
+          <p className="lede">
+            Every strike shows before it lands. Read the red tiles again: a
+            monster that is struck falls, so make them strike each other.
+          </p>
           <div className="row" style={{ marginTop: 16 }}>
             <button className="btn primary" onClick={p.onAdjust}>
               Adjust moves
@@ -136,7 +181,11 @@ export function ResultSheet(p: ResultProps) {
               Start over
             </button>
           </div>
-          {me && me.tries > 0 && <p className="muted" style={{ textAlign: 'center', fontSize: 13 }}>Tries today: {me.tries}</p>}
+          {me && me.tries > 0 && (
+            <p className="muted" style={{ textAlign: 'center', fontSize: 13 }}>
+              Tries today: {me.tries}
+            </p>
+          )}
         </div>
       </div>
     );
@@ -147,21 +196,27 @@ export function ResultSheet(p: ResultProps) {
       <div className="sheet" role="dialog" aria-label="Result">
         <h2 className="wordmark">The field is clear</h2>
         <p className="lede">
-          {p.server?.firstFinder
-            ? 'Nobody in the subreddit had found this way. It carries your name now.'
-            : p.server && !p.server.newForMe
-              ? 'You have won this way before. Another way is out there.'
-              : wayIndex > 0
-                ? `Way ${wayIndex} of ${total} the subreddit knows.`
-                : 'A way through.'}
+          {p.server && !p.server.saved
+            ? p.server.firstFinder
+              ? 'Nobody has claimed this way yet. Log in and win it again to put your name on it.'
+              : 'A way through.'
+            : p.server?.firstFinder
+              ? 'Nobody in the subreddit had found this way. It carries your name now.'
+              : p.server && !p.server.newForMe
+                ? 'You have won this way before. Another way is out there.'
+                : wayIndex > 0
+                  ? `Way ${wayIndex} of ${total} the subreddit knows.`
+                  : 'A way through.'}
         </p>
-        {p.server?.firstFinder && <span className="badge-first">First to find it</span>}
+        {p.server?.firstFinder && p.server.saved && (
+          <span className="badge-first">First to find it</span>
+        )}
         <ul className="way-lines">
           {waySentences(outcome.wayKey, p.puzzle).map((s) => (
             <li key={s}>{s}.</li>
           ))}
         </ul>
-        {me && (
+        {me && p.server?.saved !== false && (
           <div className="stat-row">
             <div className="stat">
               <b>{me.tries || 1}</b>
@@ -180,9 +235,15 @@ export function ResultSheet(p: ResultProps) {
           </div>
         )}
         {p.server && !p.server.saved && (
-          <p className="muted" style={{ textAlign: 'center', fontSize: 13 }}>
-            Log in to Reddit to keep your streak and put your name on the ways you find.
-          </p>
+          <div style={{ textAlign: 'center', marginTop: 6 }}>
+            <p className="muted" style={{ fontSize: 13, margin: '0 0 8px' }}>
+              You are not logged in, so this clear is not saved. Log in to keep
+              your streak and put your name on the ways you find.
+            </p>
+            <button className="btn" onClick={() => showLoginPrompt()}>
+              Log in to Reddit
+            </button>
+          </div>
         )}
         <div className="row" style={{ marginTop: 10 }}>
           {mineCount < total && (
@@ -204,7 +265,9 @@ export function ResultSheet(p: ResultProps) {
             <Codex community={community} me={me ?? emptyMe} />
           </>
         )}
-        {p.server?.saved && me && !me.nation && <NationPicker onPick={p.onNation} busy={p.busy} />}
+        {p.server?.saved && me && !me.nation && (
+          <NationPicker onPick={p.onNation} busy={p.busy} />
+        )}
         {community && community.board.length > 0 && (
           <>
             <h3>First to clear today</h3>
@@ -215,7 +278,8 @@ export function ResultSheet(p: ResultProps) {
                   <Avatar src={r.avatar} name={r.name} />
                   <span className="nm">u/{r.name}</span>
                   <span className="muted">
-                    {r.tries === 1 ? 'first try' : `${r.tries} tries`} · {r.ways} {r.ways === 1 ? 'way' : 'ways'}
+                    {r.tries === 1 ? 'first try' : `${r.tries} tries`} ·{' '}
+                    {r.ways} {r.ways === 1 ? 'way' : 'ways'}
                   </span>
                 </li>
               ))}
@@ -225,7 +289,8 @@ export function ResultSheet(p: ResultProps) {
         {p.server?.saved && (
           <div className="row" style={{ marginTop: 12 }}>
             <button className="btn ghost" disabled={p.busy} onClick={p.onJoin}>
-              Join r/{p.data?.subreddit ?? 'the trials'} for tomorrow&apos;s trial
+              Join r/{p.data?.subreddit ?? 'the trials'} for tomorrow&apos;s
+              trial
             </button>
           </div>
         )}
@@ -241,22 +306,44 @@ export function ResultSheet(p: ResultProps) {
   );
 }
 
-const emptyMe: Me = { username: null, tries: 0, solved: false, ways: [], streak: 0, best: 0, nation: null, firstVisit: false };
+const emptyMe: Me = {
+  username: null,
+  tries: 0,
+  solved: false,
+  ways: [],
+  streak: 0,
+  best: 0,
+  nation: null,
+  firstVisit: false,
+};
 
 export function HelpSheet(props: { onClose: () => void; puzzle: Puzzle }) {
   const mobs = [...new Set(props.puzzle.enemies.map((e) => e.mob))] as MobId[];
   const classes = props.puzzle.heroes.map((h) => h.cls) as ClassId[];
-  const allMobs = (Object.keys(MOBS) as MobId[]).filter((m) => !mobs.includes(m));
+  const allMobs = (Object.keys(MOBS) as MobId[]).filter(
+    (m) => !mobs.includes(m)
+  );
   return (
     <div className="sheet-backdrop" onClick={props.onClose}>
-      <div className="sheet" role="dialog" aria-label="How to play" onClick={(e) => e.stopPropagation()}>
-        <button className="sheet-close" aria-label="Close help" onClick={props.onClose}>
+      <div
+        className="sheet"
+        role="dialog"
+        aria-label="How to play"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          className="sheet-close"
+          aria-label="Close help"
+          onClick={props.onClose}
+        >
           ×
         </button>
         <h2 className="wordmark">How to play</h2>
         <p className="lede">
-          Every monster shows the tiles it will strike. Move each hero once and use its ability. Then press Strike: every monster strikes at the same
-          moment. Win when every monster falls, no hero is struck and every lamp stays lit.
+          Every monster shows the tiles it will strike. Move each hero once and
+          use its ability. Then press Strike: every monster strikes at the same
+          moment. Win when every monster falls, no hero is struck and every lamp
+          stays lit.
         </p>
         <h3>Your heroes today</h3>
         <div className="help-grid">
@@ -264,7 +351,8 @@ export function HelpSheet(props: { onClose: () => void; puzzle: Puzzle }) {
             <div key={c} className="help-item">
               <IconBadge name={CLASS_ICON[c]} ring="#d9b66b" fill="#f1d590" />
               <div>
-                <span className="t">{CLASSES[c].name}</span> · {CLASSES[c].ability} · walks {CLASSES[c].move}
+                <span className="t">{CLASSES[c].name}</span> ·{' '}
+                {CLASSES[c].ability} · walks {CLASSES[c].move}
                 <div className="muted">{CLASSES[c].blurb}</div>
               </div>
             </div>
@@ -273,7 +361,11 @@ export function HelpSheet(props: { onClose: () => void; puzzle: Puzzle }) {
         <h3>The monsters</h3>
         <div className="help-grid">
           {[...mobs, ...allMobs].map((m) => (
-            <div key={m} className="help-item" style={{ opacity: mobs.includes(m) ? 1 : 0.6 }}>
+            <div
+              key={m}
+              className="help-item"
+              style={{ opacity: mobs.includes(m) ? 1 : 0.6 }}
+            >
               <IconBadge name={MOB_ICON[m]} ring="#d1543f" fill="#efe6d2" />
               <div>
                 <span className="t">{MOBS[m].name}</span> · {MOBS[m].attack}
@@ -284,7 +376,8 @@ export function HelpSheet(props: { onClose: () => void; puzzle: Puzzle }) {
         </div>
         <h3>Small print</h3>
         <p className="muted" style={{ fontSize: 14, margin: 0 }}>
-          A creature shoved into rock, a lamp or another creature takes 1. Shoved or dragged over a chasm, it falls. Monsters with two red pips
+          A creature shoved into rock, a lamp or another creature takes 1.
+          Shoved or dragged over a chasm, it falls. Monsters with two red pips
           need two hits. Undo is free; only Strike counts as a try.
         </p>
         <div className="row" style={{ marginTop: 14 }}>
@@ -293,7 +386,8 @@ export function HelpSheet(props: { onClose: () => void; puzzle: Puzzle }) {
           </button>
         </div>
         <p className="credits">
-          A daily trial from the world of Orvandel. Icons by Lorc, Delapouite, Caro Asercion and DarkZaitzev from game-icons.net (CC BY 3.0).
+          A daily trial from the world of Orvandel. Icons by Lorc, Delapouite,
+          Caro Asercion and DarkZaitzev from game-icons.net (CC BY 3.0).
           Cormorant Unicase and Alegreya Sans (SIL Open Font License).
         </p>
       </div>

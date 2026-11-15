@@ -144,6 +144,39 @@ async function run(tag: string, viewport: { width: number; height: number }, dpr
   await browser.close();
 }
 
+/** A redditor who is not logged in: the warm-up shows, the win shows, nothing is saved, and Log in is offered. */
+async function runLoggedOut() {
+  const browser = await chromium.launch({ channel: process.env.PW_CHANNEL ?? 'msedge' });
+  const ctx = await browser.newContext({ viewport: { width: 412, height: 892 }, deviceScaleFactor: 2.625, isMobile: true, hasTouch: true, userAgent: UA });
+  const page = await ctx.newPage();
+  const errors: string[] = [];
+  page.on('pageerror', (e) => errors.push(e.message));
+  await page.goto(`${BASE}/game.html`);
+  await page.waitForSelector('.board-wrap svg');
+  if (!(await page.locator('.coach').count())) findings.push('logged out: no warm-up for a first-time visitor');
+  await tapTile(page, WARMUP, 0, 1);
+  await tapTile(page, WARMUP, 1, 1);
+  await tapButton(page, 'Strike');
+  await page.waitForSelector('.sheet');
+  await tapButton(page, /Begin today/);
+  await page.waitForTimeout(400);
+  const s = trialFor(season, day);
+  await playLine(page, s.puzzle, solve(s.puzzle).ways[0]!.line);
+  await tapButton(page, 'Strike');
+  await page.waitForSelector('.sheet');
+  await page.waitForTimeout(400);
+  await page.screenshot({ path: `${OUT}/loggedout-win.png` });
+  if (!(await page.getByRole('button', { name: 'Log in to Reddit' }).count())) findings.push('logged out: no Log in button after a win');
+  if (await page.getByRole('button', { name: 'Leave a chalk mark' }).count()) findings.push('logged out: chalk mark offered to a logged-out player');
+  const sheetText = (await page.locator('.sheet').textContent()) ?? '';
+  if (sheetText.includes('carries your name')) findings.push('logged out: told the way carries their name, but nothing was saved');
+  if (await page.locator('.badge-first').count()) findings.push('logged out: shown the first-finder badge without being saved');
+  if (await page.locator('.stat-row').count()) findings.push('logged out: shown saved stats (ways, streak) that do not exist');
+  for (const e of errors) findings.push(`logged out: page error: ${e}`);
+  await browser.close();
+}
+
+await runLoggedOut();
 await run('s24', { width: 412, height: 892 }, 2.625);
 await run('s24-in-reddit', { width: 412, height: 780 }, 2.625);
 await run('small', { width: 360, height: 640 }, 2);

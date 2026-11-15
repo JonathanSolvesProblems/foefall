@@ -12,3 +12,7 @@ export function showToast(text: string): void {
 export function navigateTo(url: string): void {
   console.log('[navigate]', url);
 }
+
+export function showLoginPrompt(): void {
+  console.log('[login prompt]');
+}
