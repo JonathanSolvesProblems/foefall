@@ -45,7 +45,7 @@ async function run(viewport: { width: number; height: number }, tag: string) {
   page.on('console', (m) => {
     if (m.type() === 'error') errors.push(`${tag} console: ${m.text()}`);
   });
-  const user = `p${tag}`;
+  const user = `p${tag}${Date.now() % 100000}`;
 
   await page.goto(`${BASE}/splash.html?user=${user}&new=1&day=${day}`);
   await page.waitForSelector('.splash-board svg');
