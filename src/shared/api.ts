@@ -66,6 +66,8 @@ export type InitResponse = {
   community: Community;
   /** Set when this post holds a trial a redditor forged, rather than the day's trial. */
   forge: { id: number; title: string; author: string; pick?: boolean } | null;
+  /** On an older day's post or a player-built one: where today's trial is, so nobody is stranded on an old post. */
+  todayUrl: string | null;
 };
 
 export type AttemptRequest = { actions: Action[] };

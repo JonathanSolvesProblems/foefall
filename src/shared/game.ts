@@ -195,6 +195,7 @@ export async function loadInit(
     me,
     community,
     forge: f ? { id: f.id, title: f.title, author: f.author } : null,
+    todayUrl: null,
   };
 }
 

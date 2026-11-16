@@ -56,6 +56,7 @@ function mockApi(): Plugin {
           if (ref.searchParams.get('new') === '1' && who.userId) await store.hSet(`fw:u:${who.userId}`, { seen: '0' });
           const res = await game.loadInit(store, season, { day, today, who, forge, subreddit: 'forewarned_dev', postId: 'local' });
           if (res.forge && ref.searchParams.get('pick') === '1') res.forge = { ...res.forge, pick: true };
+          if (!res.isToday) res.todayUrl = `/splash.html?user=${encodeURIComponent(ref.searchParams.get('user') ?? '')}&day=${today}`;
           return send(200, res);
         }
         if (path === '/api/attempt') {

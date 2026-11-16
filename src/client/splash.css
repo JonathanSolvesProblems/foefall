@@ -141,3 +141,15 @@
     font-size: 19px;
   }
 }
+
+/* On an older or player-built post: the way to today's trial. A real button, sized for a thumb. */
+.today-link {
+  padding: 8px 0;
+  border: 0;
+  background: none;
+  color: var(--gold-hi);
+  font: inherit;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}

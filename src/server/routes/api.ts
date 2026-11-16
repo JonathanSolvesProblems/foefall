@@ -27,6 +27,13 @@ async function init(): Promise<InitResponse> {
   const res = await loadInit(kv, season, { day, forge, today: today(), who: await currentWho(), subreddit: context.subredditName, postId: context.postId });
   // A community pick post plays the same trial as the original; the splash says it was picked.
   if (res.forge && context.postData?.pick === true) res.forge = { ...res.forge, pick: true };
+  // Anywhere but today's own post, point at today's trial.
+  if (!res.isToday) {
+    const id = await kv.hGet('fw:dayposts', String(res.today));
+    if (id && id.startsWith('t3_') && id !== context.postId) {
+      res.todayUrl = `https://www.reddit.com/r/${context.subredditName}/comments/${id.slice(3)}/`;
+    }
+  }
   return res;
 }
 

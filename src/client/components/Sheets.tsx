@@ -1,4 +1,4 @@
-import { showLoginPrompt, showShareSheet } from '@devvit/web/client';
+import { navigateTo, showLoginPrompt, showShareSheet } from '@devvit/web/client';
 import { untilNextTrial } from '../lib/time';
 import { useState } from 'react';
 import {
@@ -394,7 +394,16 @@ export function ResultSheet(p: ResultProps) {
             Share
           </button>
         </div>
-        <p className="muted next-trial">The next trial goes up in {untilNextTrial()}.</p>
+        {p.data?.todayUrl ? (
+          // On an older or player-built post, today's trial is already up: send them there.
+          <div className="row" style={{ marginTop: 8 }}>
+            <button className="btn" onClick={() => navigateTo(p.data!.todayUrl!)}>
+              Go to today&apos;s trial, #{p.data.today}
+            </button>
+          </div>
+        ) : (
+          <p className="muted next-trial">The next trial goes up in {untilNextTrial()}.</p>
+        )}
         {community && (
           <>
             <h3>

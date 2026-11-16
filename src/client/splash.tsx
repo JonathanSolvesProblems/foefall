@@ -1,7 +1,7 @@
 import './styles.css';
 import './splash.css';
 
-import { requestExpandedMode } from '@devvit/web/client';
+import { navigateTo, requestExpandedMode } from '@devvit/web/client';
 import { type MouseEvent, StrictMode, useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { type InitResponse, NATIONS, NATION_LIST } from '../shared/api';
@@ -114,6 +114,13 @@ function Splash() {
                   {me && me.streak > 0 && (
                     <li>
                       <b>{me.streak}</b> day streak
+                    </li>
+                  )}
+                  {data.todayUrl && (
+                    <li>
+                      <button className="today-link" onClick={() => navigateTo(data.todayUrl!)}>
+                        Today&apos;s trial is #{data.today} →
+                      </button>
                     </li>
                   )}
                 </ul>

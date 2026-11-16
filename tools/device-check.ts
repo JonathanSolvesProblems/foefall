@@ -231,7 +231,28 @@ async function runLoggedOut() {
   await browser.close();
 }
 
+/** An older day's post: the card still fits, and it points at today's trial, which is where the link goes. */
+async function runOldPost() {
+  if (day < 2) return;
+  const browser = await chromium.launch({ channel: process.env.PW_CHANNEL ?? 'msedge' });
+  const ctx = await browser.newContext({ viewport: { width: 412, height: 512 }, deviceScaleFactor: 2.625, isMobile: true, hasTouch: true, userAgent: UA });
+  const page = await ctx.newPage();
+  await page.goto(`${BASE}/splash.html?user=old${Date.now() % 100000}&day=${day - 1}`);
+  await page.waitForSelector('.splash-board svg');
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: `${OUT}/old-post-card.png` });
+  if (await page.evaluate(() => (document.scrollingElement?.scrollHeight ?? 0) > window.innerHeight + 1)) findings.push('old post: the feed card scrolls at 512 px tall');
+  const link = page.getByRole('button', { name: new RegExp(`Today's trial is #${day}`) });
+  if (!(await link.count())) findings.push('old post: no link to today’s trial on the card');
+  else {
+    await link.tap();
+    await page.waitForURL(new RegExp(`day=${day}`), { timeout: 5000 }).catch(() => findings.push('old post: the link did not go to today’s trial'));
+  }
+  await browser.close();
+}
+
 await runLoggedOut();
+await runOldPost();
 await run('s24', { width: 412, height: 892 }, 2.625);
 await run('s24-in-reddit', { width: 412, height: 780 }, 2.625);
 await run('small', { width: 360, height: 640 }, 2);
