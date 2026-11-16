@@ -151,6 +151,8 @@ function Play(props: {
     try {
       const fresh = await api.nation(n);
       props.onData({ me: fresh.me, community: fresh.community });
+      // The open win card reads the strike's own copy of the player: update it too, or the picker stays up.
+      setResult((r) => (r?.server ? { ...r, server: { ...r.server, me: fresh.me, community: fresh.community } } : r));
       props.toast(`You fight for ${NATIONS[n].name}. Your flair is set.`);
     } catch (e) {
       props.toast((e as Error).message);
