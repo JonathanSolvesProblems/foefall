@@ -1,6 +1,8 @@
 import { context, reddit, redis } from '@devvit/web/server';
 import { TIERS, type TierId } from '../../shared/engine/generator';
 import { trialFor } from '../../shared/game';
+import { chalkThread } from './chalkthread';
+import { claimPost, isPending } from './claims';
 import { season, today } from './context';
 
 type Flair = { text: string; backgroundColor: string; textColor: 'light' | 'dark' };
@@ -37,25 +39,6 @@ export async function flairPost(postId: string, flair: Flair): Promise<boolean> 
   }
 }
 
-/** A claim is "pending:<ms>" while its post is being made. One older than this was left by a crash and is taken over. */
-const CLAIM_STALE_MS = 120_000;
-export const isPending = (v: string | undefined): boolean => !!v && v.startsWith('pending');
-const isFreshClaim = (v: string, nowMs: number) => nowMs - Number(v.split(':')[1] ?? 0) < CLAIM_STALE_MS;
-
-/**
- * Claim a field before posting, so the scheduler, the triggers and the mod menu never post the same thing twice even
- * when they overlap. Returns the existing post id, '' when another caller is posting it right now, or null when the
- * caller holds the claim and should post.
- */
-export async function claimPost(key: string, field: string, nowMs = Date.now()): Promise<string | null> {
-  if ((await redis.hSetNX(key, field, `pending:${nowMs}`)) === 1) return null;
-  const cur = await redis.hGet(key, field);
-  if (cur && !isPending(cur)) return cur;
-  if (cur && isFreshClaim(cur, nowMs)) return '';
-  await redis.hSet(key, { [field]: `pending:${nowMs}` });
-  return null;
-}
-
 /**
  * Post the trial for a day, once. Returns the post id, existing or new; the id is '' when another caller is posting it
  * at this moment.
@@ -82,5 +65,6 @@ export async function postDay(day: number = today(), force = false): Promise<{ i
   await redis.set(`fw:post:${post.id}`, String(day));
   await redis.hSet(claimKey, { [String(day)]: post.id });
   await flairPost(post.id, dayFlair(day));
+  await chalkThread(post.id); // the stickied comment chalk marks reply to
   return { id: post.id, created: true };
 }

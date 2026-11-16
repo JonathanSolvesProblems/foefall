@@ -15,6 +15,7 @@ import {
 import { cleanTitle, verifyForge } from '../../shared/forge';
 import { claimChalk, flairText, loadInit, markSeen, releaseChalk, setForgePost, recordAttempt, saveForge, setNation } from '../../shared/game';
 import { currentWho, kv, season, today, trialForPost } from '../core/context';
+import { chalkThread } from '../core/chalkthread';
 import { recordForgePost } from '../core/picks';
 import { flairPost, PLAYER_FLAIR } from '../core/post';
 
@@ -123,7 +124,11 @@ api.post('/chalk', async (c) => {
     `Found ${me.ways.length} of ${data.community.waysTotal} ways. The subreddit has found ${data.community.ways.length}.`,
   ];
   try {
-    await reddit.submitComment({ id: context.postId, text: lines.join('\n'), runAs: 'USER' });
+    // Reddit's pattern for results posted as the player: a reply under the post's one stickied comment, not a
+    // top-level comment, so the discussion stays readable and each player can delete their own.
+    const thread = await chalkThread(context.postId);
+    if (!thread) throw new Error('no chalk thread');
+    await reddit.submitComment({ id: thread as `t1_${string}`, text: lines.join('\n'), runAs: 'USER' });
     return c.json<OkResponse>({ type: 'ok', message: 'Chalk mark left in the comments.' });
   } catch (e) {
     console.error('chalk failed', e);

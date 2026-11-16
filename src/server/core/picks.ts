@@ -2,7 +2,9 @@ import { context, reddit, redis } from '@devvit/web/server';
 import { loadForge } from '../../shared/game';
 import { choosePick, isSunday, PICK_MIN_SCORE, PICK_WINDOW_MS, pickTitle, type PickCandidate } from '../../shared/picks';
 import { kv } from './context';
-import { claimPost, flairPost, isPending } from './post';
+import { chalkThread } from './chalkthread';
+import { claimPost, isPending } from './claims';
+import { flairPost } from './post';
 
 /** Player-built posts by creation time. Trimmed to 30 days, inside the data retention window. */
 const FORGE_POSTS = 'fw:forgeposts';
@@ -86,6 +88,7 @@ export async function postCommunityPick(day: number, opts: { force?: boolean; dr
     if (opts.force) await release();
     else await redis.hSet(PICK_POSTS, { [slot]: post.id });
     await flairPost(post.id, PICK_FLAIR);
+    await chalkThread(post.id);
     return { id: post.id, forgeId: forge.id, reason: 'posted' };
   } catch (e) {
     await redis.hDel(PICKED, [String(pick.forgeId)]);

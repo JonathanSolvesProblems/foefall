@@ -3,6 +3,7 @@ import type { TriggerResponse, UiResponse } from '@devvit/web/shared';
 import { context, redis } from '@devvit/web/server';
 import { forgetForge } from '../../shared/game';
 import { kv, today } from '../core/context';
+import { forgetChalkThread } from '../core/chalkthread';
 import { forgetForgePost, postCommunityPick } from '../core/picks';
 import { postDay } from '../core/post';
 import { selfTest } from '../core/selftest';
@@ -65,6 +66,7 @@ internal.post('/triggers/on-post-delete', async (c) => {
       const mapped = await redis.get(`fw:post:${postId}`);
       await redis.del(`fw:post:${postId}`);
       await forgetForgePost(postId);
+      await forgetChalkThread(postId);
       // A player-built trial is its maker's content: deleting the post it first went up in deletes it.
       const forgeId = Number(mapped?.replace(/^forge:/, ''));
       const trialGone = mapped?.startsWith('forge:') && forgeId > 0 ? await forgetForge(kv, forgeId, postId) : false;

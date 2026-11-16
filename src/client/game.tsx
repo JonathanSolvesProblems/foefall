@@ -176,8 +176,14 @@ function Play(props: {
       props.toast((await api.subscribe()).message);
       setJoined(true);
       journey.interaction('subscribe');
-    } catch (e) {
-      props.toast((e as Error).message);
+    } catch {
+      // Reddit only lets an app subscribe a player once the app is approved. Until then, take them to the subreddit,
+      // where Reddit's own Join button is one tap away.
+      const sub = data?.subreddit;
+      if (sub) {
+        props.toast(`Opening r/${sub}. Tap Join there.`);
+        navigateTo(`https://www.reddit.com/r/${sub}/`);
+      } else props.toast('Could not join right now.');
     } finally {
       setBusy(false);
     }

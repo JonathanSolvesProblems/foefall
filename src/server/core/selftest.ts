@@ -7,7 +7,9 @@ import { verifyForge } from '../../shared/forge';
 import { claimChalk, forgetForge, loadForge, loadInit, recordAttempt, releaseChalk, saveForge, setForgePost, trialFor } from '../../shared/game';
 import { kv, season, today } from './context';
 import { postCommunityPick } from './picks';
-import { dayFlair, flairPost, isPending } from './post';
+import { chalkThread } from './chalkthread';
+import { isPending } from './claims';
+import { dayFlair, flairPost } from './post';
 
 export async function selfTest(): Promise<string> {
   const t0 = Date.now();
@@ -88,6 +90,21 @@ export async function selfTest(): Promise<string> {
       if (!flaired) problems.push('post flair could not be set');
       else if (got !== want) problems.push(`post flair reads "${got}", expected "${want}"`);
       post = `post ${p.id} "${p.title}" flaired "${got}"`;
+      // The stickied comment chalk marks reply to: made if missing, then read back from Reddit.
+      const thread = await chalkThread(postId);
+      if (!thread) problems.push('today’s post has no chalk thread');
+      else {
+        const tc = await reddit.getCommentById(thread as `t1_${string}`);
+        if (!tc.stickied) problems.push(`chalk thread ${thread} is not stickied`);
+        // A thread Reddit's filter removed is invisible to everyone but mods: that would hide every chalk mark.
+        else if (tc.removed || tc.spam) problems.push(`chalk thread ${thread} was removed by Reddit (removed ${tc.removed}, spam ${tc.spam})`);
+        else post += `, chalk thread ${thread} stickied and visible`;
+      }
+      // How Reddit holds today's comments: removed or spam would hide chalk marks from everyone but mods. No names logged.
+      const all = await reddit.getComments({ postId: postId as `t3_${string}`, limit: 50 }).all();
+      const hidden = all.filter((c) => c.removed || c.spam).length;
+      if (hidden) problems.push(`${hidden} of ${all.length} comments on today’s post were removed by Reddit`);
+      else post += `, ${all.length} comments all visible`;
     } catch (e) {
       problems.push(`today's post ${postId} could not be read: ${(e as Error).message}`);
     }
