@@ -6,3 +6,4 @@ tmp/
 tools/shots/
 *.log
 PHASE0.md
+.tsbuild/

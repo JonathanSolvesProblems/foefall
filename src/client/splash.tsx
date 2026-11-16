@@ -83,13 +83,14 @@ function Splash() {
           <div className="splash-info">
             {data && (
               <>
-                {data.forge ? (
-                  data.forge.pick && <div className="splash-date">This week&apos;s community pick</div>
-                ) : (
-                  <div className="splash-date">{longDate(data.date)}</div>
-                )}
+                {/* The small line above the title: the date on a daily post, the maker on a player-built one. */}
+                <div className="splash-date">
+                  {data.forge
+                    ? `${data.forge.pick ? 'Community pick · ' : ''}Built by u/${data.forge.author}`
+                    : longDate(data.date)}
+                </div>
                 <div className="display splash-day">{data.forge ? data.forge.title || 'A trial by a redditor' : `#${data.day} · ${data.moon}`}</div>
-                <div className="splash-feel">{data.forge ? `Built by u/${data.forge.author} · ${data.feel}` : data.feel}</div>
+                <div className="splash-feel">{data.feel}</div>
                 <p className="splash-rule">Every monster shows where it will strike. Make them strike each other.</p>
                 <ul className="splash-stats">
                   {c && c.players > 0 ? (

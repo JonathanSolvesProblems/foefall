@@ -3,9 +3,9 @@
   "compilerOptions": {
     "lib": ["WebWorker", "ES2023"],
 
-    "outDir": "../dist/types/shared",
+    "outDir": "../.tsbuild/shared",
 
-    "tsBuildInfoFile": "../dist/types/shared/tsconfig.tsbuildinfo",
+    "tsBuildInfoFile": "../.tsbuild/shared/tsconfig.tsbuildinfo",
 
     "rootDir": "../src/shared"
   },

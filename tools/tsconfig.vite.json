@@ -1,8 +1,8 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "../dist/types/tools",
-    "tsBuildInfoFile": "../dist/types/tools/tsconfig.vite.tsbuildinfo",
+    "outDir": "../.tsbuild/tools",
+    "tsBuildInfoFile": "../.tsbuild/tools/tsconfig.vite.tsbuildinfo",
     "types": ["node"],
     "rootDir": ".."
   },
