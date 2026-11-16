@@ -104,7 +104,9 @@ api.post('/chalk', async (c) => {
   if (me.chalked >= me.ways.length) return c.json<ErrorResponse>(fail('Your chalk mark is already in the thread. Find another way to leave a new one.'), 409);
   const nation = me.nation ? `${NATIONS[me.nation].sigil} ${NATIONS[me.nation].short}` : '';
   const streak = me.streak > 1 && !data.forge ? ` · ${me.streak}-day streak` : '';
-  const what = data.forge ? `u/${data.forge.author}'s trial "${data.forge.title || 'Untitled'}"` : `Foefall #${data.day} (${data.moon})`;
+  // A player-built trial's title is user text, and its maker already hears about comments on their own post, so the
+  // chalk mark neither quotes the title (no markdown or links from it) nor mentions the maker.
+  const what = data.forge ? 'this trial' : `Foefall #${data.day} (${data.moon})`;
   const lines = [
     `**u/${me.username}** cleared ${what} on try ${data.community.board.find((r) => r.name === me.username)?.tries ?? me.tries}${streak}${nation ? ` · ${nation}` : ''}.`,
     '',
