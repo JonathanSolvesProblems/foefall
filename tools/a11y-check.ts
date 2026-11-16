@@ -152,6 +152,19 @@ await page.getByRole('button', { name: 'How to play' }).click();
 await page.waitForTimeout(300);
 await audit(page, 'help sheet');
 
+// A loss, three times, so the sheet also offers the nudge; then the nudge itself on the board.
+await page.getByRole('button', { name: 'Close help' }).click();
+for (let i = 0; i < 3; i++) {
+  if (i > 0) await page.getByRole('button', { name: 'Start over' }).click();
+  await page.getByRole('button', { name: 'Strike', exact: true }).click();
+  await page.waitForSelector('.sheet h2');
+  await page.waitForTimeout(400);
+}
+await audit(page, 'loss sheet with nudge');
+await page.getByRole('button', { name: /Show me a first step/ }).click();
+await page.waitForSelector('.nudge');
+await audit(page, 'nudge on the board');
+
 await browser.close();
 console.log(`sampled contrast passed on ${checked.length} elements axe could not measure`);
 console.log(findings.length ? `FINDINGS (${findings.length}):\n- ${findings.join('\n- ')}` : 'no findings');

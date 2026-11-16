@@ -142,6 +142,9 @@ export type ResultProps = {
   onPublish?: ((title: string) => Promise<void>) | undefined;
   onBackToForge?: (() => void) | undefined;
   proofWays?: number | undefined;
+  /** Offered after three failed tries: show the opening move of a way the player has not found. */
+  onNudge?: (() => void) | undefined;
+  nudging?: boolean | undefined;
 };
 
 /** After clearing your own trial: name it and post it, or go back and change it. */
@@ -292,6 +295,13 @@ export function ResultSheet(p: ResultProps) {
               Start over
             </button>
           </div>
+          {p.onNudge && (
+            <div className="row" style={{ marginTop: 8 }}>
+              <button className="btn ghost" disabled={p.nudging} onClick={p.onNudge}>
+                {p.nudging ? 'Finding a first step…' : 'Stuck? Show me a first step'}
+              </button>
+            </div>
+          )}
           {me && me.tries > 0 && (
             <p className="muted" style={{ textAlign: 'center', fontSize: 13 }}>
               Tries today: {me.tries}

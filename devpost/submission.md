@@ -30,7 +30,7 @@ In Orvandel, the MMO I have been building, the big attacks are marked on the gro
 
 A new trial goes up in the subreddit every day. Each monster shows the tiles it will strike: the Duskfield Wolf bites the tile it faces, the Thornback Boar shakes thorns on all four sides, the Shardrunner Thief throws a knife at the first thing in its path, the Cinder Acolyte calls fire two tiles ahead. Your heroes each move once and use one ability: shove, hurl, drag, swap, or drop a falling star. Then you press Strike and every monster strikes at the same moment. Clear the board with every hero standing and every lamp lit.
 
-A forecast above the board updates on every tap, so you always see who will fall before you commit. Undo is free; only Strike counts as a try.
+A forecast above the board updates on every tap, so you always see who will fall before you commit. Undo is free; only Strike counts as a try. After three failed tries you can ask for a first step: one hero's opening move from a way you have not found yet, marked on the board.
 
 Most trials can be won more than one way, and that is the Reddit part. The post shows how many ways the subreddit has found, and the first redditor to find each way gets their name and avatar on it. After a clear you can leave your result in the day's thread, pick one of Orvandel's four nations for your flair, and build a trial of your own: place the monsters, check it with the solver, clear it yourself to prove it, and post it for everyone to hunt. Every Sunday the week's best-liked player trial goes up again as the community pick.
 

@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client';
 import { type AttemptResponse, type InitResponse, type Nation, NATIONS } from '../shared/api';
 import { navigateTo } from '@devvit/web/client';
 import { type Action, CLASSES, type Outcome, playTurn, type Puzzle, type State } from '../shared/engine/rules';
+import { findNudge, type Nudge } from '../shared/nudge';
 import { WARMUP } from '../shared/trials/warmup';
 import { Board } from './components/Board';
 import { EMPTY_FORGE, ForgeEditor } from './components/ForgeEditor';
@@ -52,6 +53,10 @@ function Play(props: {
   // Ways found when the player last left a chalk mark here (null: use the server's count), and whether they joined.
   const [chalkedAt, setChalkedAt] = useState<number | null>(null);
   const [joined, setJoined] = useState(false);
+  // Failed strikes this session, and the first step shown to a stuck player (see shared/nudge.ts).
+  const [fails, setFails] = useState(0);
+  const [nudge, setNudge] = useState<Nudge | null>(null);
+  const [nudging, setNudging] = useState(false);
   const [muted, setMuted] = useState(sfx.isMuted());
   // A player who has not tried this trial yet hears about the hunt once, until their first tap.
   const [intro, setIntro] = useState(mode === 'daily' && !!data && data.me.tries === 0 && !data.me.solved);
@@ -98,6 +103,8 @@ function Play(props: {
     await sleep(720);
     setResult({ outcome: played.outcome, server });
     setPhase('result');
+    if (played.outcome.win) setNudge(null);
+    else setFails((f) => f + 1);
     if (played.outcome.win) sfx.win();
     else sfx.lose();
     if (played.outcome.win && mode !== 'proof') journey.end(true, server?.me.tries ?? 1);
@@ -110,6 +117,22 @@ function Play(props: {
     setPhase('plan');
     if (!keepMoves) t.reset();
   };
+
+  // Solving can take a second on a phone for the hardest days, so paint "Finding…" first, then start over with the
+  // first step marked on the board.
+  const askNudge = () => {
+    setNudging(true);
+    window.setTimeout(() => {
+      const n = findNudge(puzzle, data?.me.ways ?? []);
+      setNudging(false);
+      if (!n) return props.toast('No first step to show for this trial.');
+      setNudge(n);
+      journey.interaction('nudge');
+      backToPlan(false);
+      t.setSelected(n.hero);
+    }, 40);
+  };
+  const offerNudge = mode === 'daily' && (fails >= 3 || (data?.me.tries ?? 0) >= 3);
 
   const onTile = (x: number, y: number) => {
     if (phase !== 'plan') return;
@@ -198,6 +221,9 @@ function Play(props: {
         ? `${c.name}: walk to a gold dot, or use ${c.ability} on a ringed target from here.`
         : `${c.name}: walk to a gold dot. ${c.blurb}`;
   }
+  // A nudge shows until its hero has acted; its words replace the hint unless another hero is selected.
+  const nudgeLive = planning && nudge && !t.committed.acted.includes(nudge.hero) ? nudge : null;
+  if (nudgeLive && (!sel || sel.id === nudgeLive.hero)) hint = nudgeLive.text;
 
   const sub =
     mode === 'proof'
@@ -279,6 +305,7 @@ function Play(props: {
             hitting={fx?.hitting}
             bursts={fx?.bursts}
             onTile={onTile}
+            nudge={nudgeLive}
             label={`Trial board, ${puzzle.w} by ${puzzle.h}`}
           />
         </div>
@@ -344,6 +371,8 @@ function Play(props: {
           onPublish={props.onPublish ? (title: string) => props.onPublish!(t.actions, title) : undefined}
           onBackToForge={props.onBackToForge}
           proofWays={props.proofWays}
+          onNudge={offerNudge ? askNudge : undefined}
+          nudging={nudging}
         />
       )}
       {help && <HelpSheet puzzle={puzzle} onClose={() => setHelp(false)} />}

@@ -1015,8 +1015,24 @@ button {
   .burst,
   .danger-ring,
   .token.selected .ring,
-  .striking .strike-tile {
+  .striking .strike-tile,
+  .nudge {
     animation: none;
+  }
+}
+
+/* The first step a nudge shows breathes gently, so it reads as advice laid over the board, not as part of it. */
+.nudge {
+  animation: nudge-breathe 1.8s ease-in-out infinite;
+}
+
+@keyframes nudge-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
   }
 }
 

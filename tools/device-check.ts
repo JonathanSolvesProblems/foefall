@@ -8,6 +8,7 @@ import { dayNumber } from '../src/shared/engine/generator';
 import { applyAction, initialState, type Action, type Puzzle } from '../src/shared/engine/rules';
 import { solve } from '../src/shared/engine/solver';
 import { trialFor, type SeasonDay } from '../src/shared/game';
+import { findNudge } from '../src/shared/nudge';
 import { WARMUP } from '../src/shared/trials/warmup';
 
 const BASE = 'http://127.0.0.1:5199';
@@ -119,7 +120,34 @@ async function run(tag: string, viewport: { width: number; height: number }, dpr
   await tapButton(page, 'Undo');
   if ((await page.locator('.hero-card.done').count()) !== 0) findings.push(`${tag}: Undo after Wait did not restore the hero`);
 
+  // Stuck: three failed strikes offer a nudge, which marks a legal first step and explains it, until that hero acts.
   const s = trialFor(season, day);
+  for (let i = 0; i < 3; i++) {
+    if (i > 0) await tapButton(page, 'Start over');
+    await tapButton(page, 'Strike');
+    await page.waitForSelector('.sheet h2');
+    await page.waitForTimeout(300);
+  }
+  if (!(await page.getByRole('button', { name: /Show me a first step/ }).count())) findings.push(`${tag}: no nudge offered after three failed tries`);
+  else {
+    await tapButton(page, /Show me a first step/);
+    await page.waitForSelector('.nudge', { timeout: 10_000 }).catch(() => findings.push(`${tag}: the nudge did not appear on the board`));
+    const hintText = (await page.locator('.hint').textContent()) ?? '';
+    if (!hintText.startsWith('First step:')) findings.push(`${tag}: the hint row does not explain the nudge ("${hintText}")`);
+    await page.screenshot({ path: `${OUT}/${tag}-3b-nudge.png` });
+    const n = findNudge(s.puzzle, []);
+    if (n) {
+      const moves = n.to[0] !== n.from[0] || n.to[1] !== n.from[1];
+      await tapTile(page, s.puzzle, n.from[0], n.from[1]);
+      if (moves) await tapTile(page, s.puzzle, n.to[0], n.to[1]);
+      if (n.target) await tapTile(page, s.puzzle, n.target[0], n.target[1]);
+      else if (moves) await tapTile(page, s.puzzle, n.to[0], n.to[1]);
+      else await tapButton(page, 'Wait');
+      if (await page.locator('.nudge').count()) findings.push(`${tag}: the nudge stayed on the board after its hero acted`);
+      await tapButton(page, 'Undo');
+    }
+  }
+
   const ways = solve(s.puzzle).ways;
   const steady = { label: tag, top: await boardTop(page) };
   await playLine(page, s.puzzle, ways[ways.length - 1]!.line, steady);

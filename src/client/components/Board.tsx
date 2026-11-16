@@ -22,6 +22,8 @@ export type BoardProps = {
   /** After Strike: a burst on each tile where something fell. */
   bursts?: readonly { id: string; x: number; y: number; hero: boolean }[] | undefined;
   onTile?: ((x: number, y: number) => void) | undefined;
+  /** A stuck player's first step: the hero to use, where it walks, and what it targets. */
+  nudge?: { from: readonly [number, number]; to: readonly [number, number]; target: readonly [number, number] | null } | null | undefined;
   label: string;
 };
 
@@ -181,6 +183,32 @@ export function Board(props: BoardProps) {
           )}
         </g>
       ))}
+
+      {/* A nudge: the hero's tile, the gold square it walks to, the path between them, and the target */}
+      {props.nudge && (
+        <g className="nudge" pointerEvents="none">
+          <rect x={props.nudge.from[0] * T + 3} y={props.nudge.from[1] * T + 3} width={T - 6} height={T - 6} rx="10" fill="none" stroke="#f6e1a8" strokeWidth="4" strokeDasharray="10 7" />
+          {(props.nudge.to[0] !== props.nudge.from[0] || props.nudge.to[1] !== props.nudge.from[1]) && (
+            <>
+              <line
+                x1={props.nudge.from[0] * T + T / 2}
+                y1={props.nudge.from[1] * T + T / 2}
+                x2={props.nudge.to[0] * T + T / 2}
+                y2={props.nudge.to[1] * T + T / 2}
+                stroke="#f6e1a8"
+                strokeWidth="4"
+                strokeDasharray="6 9"
+                strokeLinecap="round"
+                opacity="0.85"
+              />
+              <rect x={props.nudge.to[0] * T + 6} y={props.nudge.to[1] * T + 6} width={T - 12} height={T - 12} rx="10" fill="#d9b66b" fillOpacity="0.35" stroke="#f6e1a8" strokeWidth="4" />
+            </>
+          )}
+          {props.nudge.target && (
+            <circle cx={props.nudge.target[0] * T + T / 2} cy={props.nudge.target[1] * T + T / 2} r="46" fill="none" stroke="#f6e1a8" strokeWidth="6" />
+          )}
+        </g>
+      )}
 
       {/* Targets the selected hero can use its ability on */}
       {props.targetTiles.map(([x, y]) => (
