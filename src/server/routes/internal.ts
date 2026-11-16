@@ -1,6 +1,8 @@
 import { Hono } from 'hono';
 import type { TriggerResponse, UiResponse } from '@devvit/web/shared';
 import { context, redis } from '@devvit/web/server';
+import { today } from '../core/context';
+import { forgetForgePost, postCommunityPick } from '../core/picks';
 import { postDay } from '../core/post';
 import { selfTest } from '../core/selftest';
 
@@ -15,6 +17,13 @@ internal.post('/scheduler/daily-trial', async (c) => {
     console.log(`daily trial ${r.created ? 'posted' : 'already up'}: ${r.id}`);
   } catch (e) {
     console.error('daily trial failed', e);
+  }
+  // Sundays: the week's best-liked player-built trial goes up again as the community pick.
+  try {
+    const p = await postCommunityPick(today());
+    if (p.reason !== 'not Sunday') console.log(`community pick: ${p.reason}${p.id ? ` ${p.id}` : ''}`);
+  } catch (e) {
+    console.error('community pick failed', e);
   }
   return c.json({}, 200);
 });
@@ -54,6 +63,7 @@ internal.post('/triggers/on-post-delete', async (c) => {
     if (postId) {
       const day = await redis.get(`fw:post:${postId}`);
       await redis.del(`fw:post:${postId}`);
+      await forgetForgePost(postId);
       if (day && (await redis.hGet('fw:dayposts', day)) === postId) await redis.hDel('fw:dayposts', [day]);
       console.log(`post ${postId} deleted; mapping for day ${day ?? '?'} removed`);
     }
@@ -73,6 +83,17 @@ internal.post('/menu/post-today', async (c) => {
   } catch (e) {
     console.error('menu post failed', e);
     return c.json<UiResponse>({ showToast: 'Could not post today’s trial.' }, 400);
+  }
+});
+
+/** Post the community pick now, from this week's player-built trials, without waiting for Sunday. */
+internal.post('/menu/post-pick', async (c) => {
+  try {
+    const r = await postCommunityPick(today(), { force: true });
+    return c.json<UiResponse>(r.id ? { navigateTo: link(r.id) } : { showToast: r.reason }, 200);
+  } catch (e) {
+    console.error('pick post failed', e);
+    return c.json<UiResponse>({ showToast: 'Could not post the community pick.' }, 400);
   }
 });
 

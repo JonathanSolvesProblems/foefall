@@ -6,6 +6,7 @@ import { solve } from '../../shared/engine/solver';
 import { verifyForge } from '../../shared/forge';
 import { loadForge, loadInit, recordAttempt, saveForge, trialFor } from '../../shared/game';
 import { kv, season, today } from './context';
+import { postCommunityPick } from './picks';
 import { dayFlair, flairPost } from './post';
 
 export async function selfTest(): Promise<string> {
@@ -86,8 +87,16 @@ export async function selfTest(): Promise<string> {
   } catch (e) {
     community = `community type unreadable: ${(e as Error).message}`;
   }
+  // The community pick, chosen but not posted, so the Reddit reads behind it are proven before the first Sunday.
+  let pick: string;
+  try {
+    pick = (await postCommunityPick(day, { force: true, dryRun: true })).reason;
+  } catch (e) {
+    problems.push(`community pick dry run failed: ${(e as Error).message}`);
+    pick = 'failed';
+  }
   const ms = Date.now() - t0;
   return problems.length
     ? `[selftest] FAIL day ${day}: ${problems.join('; ')} (${ms} ms)`
-    : `[selftest] ok day ${day} (${s.tier}): won way ${r.wayKey} on scratch day, ${res.ways.length} ways, forge round trip won, ${post}, ${community} (${ms} ms)`;
+    : `[selftest] ok day ${day} (${s.tier}): won way ${r.wayKey} on scratch day, ${res.ways.length} ways, forge round trip won, ${post}, pick: ${pick}, ${community} (${ms} ms)`;
 }

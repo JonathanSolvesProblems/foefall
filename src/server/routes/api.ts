@@ -15,6 +15,7 @@ import {
 import { cleanTitle, verifyForge } from '../../shared/forge';
 import { flairText, loadInit, markChalked, markSeen, recordAttempt, RETENTION_SECONDS, saveForge, setNation } from '../../shared/game';
 import { currentWho, kv, season, today, trialForPost } from '../core/context';
+import { recordForgePost } from '../core/picks';
 import { flairPost, PLAYER_FLAIR } from '../core/post';
 
 export const api = new Hono();
@@ -23,7 +24,10 @@ const fail = (message: string): ErrorResponse => ({ type: 'error', message });
 
 async function init(): Promise<InitResponse> {
   const { day, forge } = await trialForPost();
-  return loadInit(kv, season, { day, forge, today: today(), who: await currentWho(), subreddit: context.subredditName });
+  const res = await loadInit(kv, season, { day, forge, today: today(), who: await currentWho(), subreddit: context.subredditName });
+  // A community pick post plays the same trial as the original; the splash says it was picked.
+  if (res.forge && context.postData?.pick === true) res.forge = { ...res.forge, pick: true };
+  return res;
 }
 
 /** Keep the player's flair in step with their nation and streak. Flair is decoration: a failure never breaks play. */
@@ -163,6 +167,7 @@ api.post('/forge', async (c) => {
       },
     });
     await kv.set(`fw:post:${post.id}`, `forge:${id}`);
+    await recordForgePost(post.id);
     await kv.expire(`fw:forge:${id}:author`, RETENTION_SECONDS);
     await flairPost(post.id, PLAYER_FLAIR);
     return c.json<ForgeResponse>({ type: 'forge', id, postId: post.id, url: `https://reddit.com/r/${context.subredditName}/comments/${post.id.replace(/^t3_/, '')}` });

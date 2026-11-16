@@ -63,7 +63,7 @@ export type InitResponse = {
   me: Me;
   community: Community;
   /** Set when this post holds a trial a redditor forged, rather than the day's trial. */
-  forge: { id: number; title: string; author: string } | null;
+  forge: { id: number; title: string; author: string; pick?: boolean } | null;
 };
 
 export type AttemptRequest = { actions: Action[] };

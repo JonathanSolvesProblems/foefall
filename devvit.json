@@ -24,7 +24,11 @@
     "reddit": {
       "enable": true,
       "scope": "user",
-      "asUser": ["SUBMIT_POST", "SUBMIT_COMMENT", "SUBSCRIBE_TO_SUBREDDIT"]
+      "asUser": [
+        "SUBMIT_POST",
+        "SUBMIT_COMMENT",
+        "SUBSCRIBE_TO_SUBREDDIT"
+      ]
     },
     "redis": true,
     "journeys": true
@@ -37,6 +41,13 @@
         "location": "subreddit",
         "forUserType": "moderator",
         "endpoint": "/internal/menu/post-today"
+      },
+      {
+        "label": "Foefall: post a community pick now",
+        "description": "Posts this week's best-liked player-built trial without waiting for Sunday",
+        "location": "subreddit",
+        "forUserType": "moderator",
+        "endpoint": "/internal/menu/post-pick"
       },
       {
         "label": "Foefall: post a fresh copy of today's trial",

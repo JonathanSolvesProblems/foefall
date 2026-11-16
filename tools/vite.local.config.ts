@@ -54,7 +54,9 @@ function mockApi(): Plugin {
         if (path.startsWith('/api/telemetry/')) return send(200, { receipt: { status: 'LOCAL', message: 'local' } });
         if (path === '/api/init') {
           if (ref.searchParams.get('new') === '1' && who.userId) await store.hSet(`fw:u:${who.userId}`, { seen: '0' });
-          return send(200, await game.loadInit(store, season, { day, today, who, forge, subreddit: 'forewarned_dev' }));
+          const res = await game.loadInit(store, season, { day, today, who, forge, subreddit: 'forewarned_dev' });
+          if (res.forge && ref.searchParams.get('pick') === '1') res.forge = { ...res.forge, pick: true };
+          return send(200, res);
         }
         if (path === '/api/attempt') {
           const r = await game.recordAttempt(store, season, { day, today, who, forge, actions: body.actions as never, nowMs: Date.now() });

@@ -32,7 +32,7 @@ A new trial goes up in the subreddit every day. Each monster shows the tiles it 
 
 A forecast above the board updates on every tap, so you always see who will fall before you commit. Undo is free; only Strike counts as a try.
 
-Most trials can be won more than one way, and that is the Reddit part. The post shows how many ways the subreddit has found, and the first redditor to find each way gets their name and avatar on it. After a clear you can leave your result in the day's thread, pick one of Orvandel's four nations for your flair, and build a trial of your own: place the monsters, check it with the solver, clear it yourself to prove it, and post it for everyone to hunt.
+Most trials can be won more than one way, and that is the Reddit part. The post shows how many ways the subreddit has found, and the first redditor to find each way gets their name and avatar on it. After a clear you can leave your result in the day's thread, pick one of Orvandel's four nations for your flair, and build a trial of your own: place the monsters, check it with the solver, clear it yourself to prove it, and post it for everyone to hunt. Every Sunday the week's best-liked player trial goes up again as the community pick.
 
 The week follows the moon: gentle under the New Moon on Monday, fiendish under the Broken Moon on Saturday, and many paths on Sunday.
 
@@ -60,7 +60,7 @@ On a real phone, an older Reddit app showed only the post's text fallback. The f
 
 ### What's next for Foefall
 
-[X: the community outreach sent before submitting, named]. Sunday community picks: the most upvoted player-built trial of the week becomes Sunday's trial.
+[X: the community outreach sent before submitting, named].
 
 ## Built with
 
