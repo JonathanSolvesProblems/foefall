@@ -31,10 +31,13 @@ export async function selfTest(): Promise<string> {
   if (!init.community.ways.some((w) => w.key === r.wayKey)) problems.push('way not credited');
   if (init.community.board.length < 1) problems.push('leaderboard empty');
   // Chalk-mark claims (the comment itself needs a real player): one per post and ways count, released on failure.
-  const c1 = await claimChalk(kv, scratch, who.userId, 't3_selftest', 1);
-  const c2 = await claimChalk(kv, scratch, who.userId, 't3_selftest', 1);
-  await releaseChalk(kv, scratch, who.userId, 't3_selftest', 1, 0);
-  const c3 = await claimChalk(kv, scratch, who.userId, 't3_selftest', 1);
+  // A post id of its own each run: the scratch records live an hour, so a fixed one would still be claimed next run.
+  const scratchPost = `t3_selftest${t0}`;
+  const c1 = await claimChalk(kv, scratch, who.userId, scratchPost, 1);
+  const c2 = await claimChalk(kv, scratch, who.userId, scratchPost, 1);
+  await releaseChalk(kv, scratch, who.userId, scratchPost, 1, 0);
+  const c3 = await claimChalk(kv, scratch, who.userId, scratchPost, 1);
+  await releaseChalk(kv, scratch, who.userId, scratchPost, 1, 0);
   if (!c1 || c2 || !c3) problems.push(`chalk claims went ${c1}/${c2}/${c3}, expected true/false/true`);
   // Clean up the scratch day quickly; the throwaway player's own record too.
   const keys = ['stats', 'ways', 'waycount', 'nations', 'board', 'boardinfo'].map((k) => `fw:d${scratch}:${k}`);
