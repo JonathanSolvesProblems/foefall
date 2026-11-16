@@ -75,6 +75,7 @@ api.post('/attempt', async (c) => {
     who: await currentWho(),
     actions: body.actions,
     nowMs: Date.now(),
+    postId: context.postId,
   });
   if (res.type === 'error') return c.json<ErrorResponse>(res, 400);
   if (res.win && res.saved) await syncFlair(res.me);

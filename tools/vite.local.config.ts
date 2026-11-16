@@ -60,7 +60,7 @@ function mockApi(): Plugin {
           return send(200, res);
         }
         if (path === '/api/attempt') {
-          const r = await game.recordAttempt(store, season, { day, today, who, forge, actions: body.actions as never, nowMs: Date.now() });
+          const r = await game.recordAttempt(store, season, { day, today, who, forge, actions: body.actions as never, nowMs: Date.now(), postId: 'local' });
           return send(r.type === 'error' ? 400 : 200, r);
         }
         if (path === '/api/nation' && who.userId) {

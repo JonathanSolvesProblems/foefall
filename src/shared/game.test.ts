@@ -224,4 +224,15 @@ describe('chalk marks', () => {
     expect(await seen('t3_daily')).toBe(1);
     expect(await claimChalk(kv, 4, 't2_a', 't3_daily', 2)).toBe(true); // so it can be tried again
   });
+
+  it('a win on a post already chalked says so, so the card does not offer a second mark', async () => {
+    const kv = memoryKV();
+    const { ways } = await winningLine(4);
+    const base = { day: 4, today: 4, who: who('re'), nowMs: dayStart(4) + 60_000, postId: 't3_four' };
+    await recordAttempt(kv, season, { ...base, actions: ways[0]!.line });
+    expect(await claimChalk(kv, 4, 't2_re', 't3_four', 1)).toBe(true);
+    const again = await recordAttempt(kv, season, { ...base, actions: ways[0]!.line });
+    if (again.type !== 'attempt') throw new Error('expected attempt');
+    expect(again.me.chalked).toBe(1);
+  });
 });

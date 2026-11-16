@@ -211,7 +211,7 @@ export type AttemptResult = AttemptResponse | { type: 'error'; message: string }
 export async function recordAttempt(
   kv: KV,
   season: readonly SeasonDay[],
-  opts: { day: number; today: number; who: Who; actions: Action[]; nowMs: number; forge?: ForgedTrial | undefined }
+  opts: { day: number; today: number; who: Who; actions: Action[]; nowMs: number; forge?: ForgedTrial | undefined; postId?: string | undefined }
 ): Promise<AttemptResult> {
   const resolved = resolveTrial(season, opts.day, opts.forge);
   const s = resolved.s;
@@ -225,7 +225,7 @@ export async function recordAttempt(
   const { userId, username, avatar } = opts.who;
 
   if (!userId || !username) {
-    const me = await loadMe(kv, opts.day, opts.today, opts.who);
+    const me = await loadMe(kv, opts.day, opts.today, opts.who, opts.postId);
     const community = await loadCommunity(kv, { ...s, day: opts.day }, []);
     const known = community.ways.some((w) => w.key === wayKey);
     return { type: 'attempt', win, wayKey, newForMe: win, firstFinder: win && !known, saved: false, me, community };
@@ -279,7 +279,8 @@ export async function recordAttempt(
     await Promise.all(touched.map((k) => kv.expire(k, shared)));
   }
 
-  const me = await loadMe(kv, day, opts.today, opts.who);
+  // With the post id, so the win card knows whether this post's chalk mark is already left.
+  const me = await loadMe(kv, day, opts.today, opts.who, opts.postId);
   const community = await loadCommunity(kv, { ...s, day }, me.ways);
   return { type: 'attempt', win, wayKey, newForMe, firstFinder, saved: true, me, community };
 }
