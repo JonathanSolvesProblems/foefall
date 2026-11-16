@@ -54,7 +54,7 @@ function mockApi(): Plugin {
         if (path.startsWith('/api/telemetry/')) return send(200, { receipt: { status: 'LOCAL', message: 'local' } });
         if (path === '/api/init') {
           if (ref.searchParams.get('new') === '1' && who.userId) await store.hSet(`fw:u:${who.userId}`, { seen: '0' });
-          const res = await game.loadInit(store, season, { day, today, who, forge, subreddit: 'forewarned_dev' });
+          const res = await game.loadInit(store, season, { day, today, who, forge, subreddit: 'forewarned_dev', postId: 'local' });
           if (res.forge && ref.searchParams.get('pick') === '1') res.forge = { ...res.forge, pick: true };
           return send(200, res);
         }
@@ -64,7 +64,7 @@ function mockApi(): Plugin {
         }
         if (path === '/api/nation' && who.userId) {
           await game.setNation(store, who.userId, body.nation as never);
-          return send(200, await game.loadInit(store, season, { day, today, who, forge, subreddit: 'forewarned_dev' }));
+          return send(200, await game.loadInit(store, season, { day, today, who, forge, subreddit: 'forewarned_dev', postId: 'local' }));
         }
         if (path === '/api/seen' && who.userId) {
           await game.markSeen(store, who.userId);
@@ -81,10 +81,11 @@ function mockApi(): Plugin {
         if (path === '/api/chalk') {
           // Same rule as the server: one chalk mark per trial, and one more per newly found way. No comment is posted.
           if (!who.userId) return send(401, { type: 'error', message: 'Log in to leave a chalk mark.' });
-          const init = await game.loadInit(store, season, { day, today, who, forge, subreddit: 'forewarned_dev' });
+          const init = await game.loadInit(store, season, { day, today, who, forge, subreddit: 'forewarned_dev', postId: 'local' });
           if (!init.me.solved) return send(400, { type: 'error', message: 'Clear the trial first.' });
-          if (init.me.chalked >= init.me.ways.length) return send(409, { type: 'error', message: 'Your chalk mark is already in the thread. Find another way to leave a new one.' });
-          await game.markChalked(store, init.day, who.userId, init.me.ways.length);
+          const taken = { type: 'error', message: 'Your chalk mark is already in the thread. Find another way to leave a new one.' };
+          if (init.me.chalked >= init.me.ways.length) return send(409, taken);
+          if (!(await game.claimChalk(store, init.day, who.userId, 'local', init.me.ways.length))) return send(409, taken);
           return send(200, { type: 'ok', message: 'Chalk mark left in the comments.' });
         }
         if (path === '/api/subscribe') return send(200, { type: 'ok', message: 'Joined r/forewarned_dev.' });

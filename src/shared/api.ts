@@ -33,8 +33,10 @@ export type Me = {
   nation: Nation | null;
   /** True until the player finishes or skips the warm-up once. */
   firstVisit: boolean;
-  /** How many ways the player had found when they last left a chalk mark on this trial (0: none yet). */
+  /** How many ways the player had found when they last left a chalk mark on this post (0: none yet). */
   chalked: number;
+  /** The try the player first cleared this trial on (0: not cleared). Tries keep counting while they hunt more ways. */
+  clearTry: number;
 };
 
 export type BoardRow = { name: string; avatar: string | null; tries: number; ways: number };

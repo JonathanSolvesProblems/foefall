@@ -4,10 +4,10 @@
 import { context, reddit, redis } from '@devvit/web/server';
 import { solve } from '../../shared/engine/solver';
 import { verifyForge } from '../../shared/forge';
-import { loadForge, loadInit, recordAttempt, saveForge, trialFor } from '../../shared/game';
+import { claimChalk, forgetForge, loadForge, loadInit, recordAttempt, releaseChalk, saveForge, setForgePost, trialFor } from '../../shared/game';
 import { kv, season, today } from './context';
 import { postCommunityPick } from './picks';
-import { dayFlair, flairPost } from './post';
+import { dayFlair, flairPost, isPending } from './post';
 
 export async function selfTest(): Promise<string> {
   const t0 = Date.now();
@@ -30,6 +30,12 @@ export async function selfTest(): Promise<string> {
   if (init.me.streak < 1) problems.push('streak not started');
   if (!init.community.ways.some((w) => w.key === r.wayKey)) problems.push('way not credited');
   if (init.community.board.length < 1) problems.push('leaderboard empty');
+  // Chalk-mark claims (the comment itself needs a real player): one per post and ways count, released on failure.
+  const c1 = await claimChalk(kv, scratch, who.userId, 't3_selftest', 1);
+  const c2 = await claimChalk(kv, scratch, who.userId, 't3_selftest', 1);
+  await releaseChalk(kv, scratch, who.userId, 't3_selftest', 1, 0);
+  const c3 = await claimChalk(kv, scratch, who.userId, 't3_selftest', 1);
+  if (!c1 || c2 || !c3) problems.push(`chalk claims went ${c1}/${c2}/${c3}, expected true/false/true`);
   // Clean up the scratch day quickly; the throwaway player's own record too.
   const keys = ['stats', 'ways', 'waycount', 'nations', 'board', 'boardinfo'].map((k) => `fw:d${scratch}:${k}`);
   keys.push(`fw:d${scratch}:u:${who.userId}`, `fw:u:${who.userId}`);
@@ -58,6 +64,10 @@ export async function selfTest(): Promise<string> {
       const lastAfter = await redis.hGet(`fw:u:${who.userId}`, 'last');
       if (fr.type !== 'attempt' || !fr.win) problems.push('forged trial could not be won');
       else if (lastBefore !== lastAfter) problems.push('a forged trial moved the streak');
+      // Deleting the post a trial went up in deletes the trial; deleting another post that plays it does not.
+      await setForgePost(kv, fid, 't3_selftestorig');
+      if (await forgetForge(kv, fid, 't3_selftestrepost')) problems.push('deleting a repost deleted the trial');
+      else if (!(await forgetForge(kv, fid, 't3_selftestorig')) || (await loadForge(kv, fid))) problems.push('deleting the original post kept the trial');
     }
     const fkeys = [`fw:forge:${fid}`, `fw:forge:${fid}:author`, ...['stats', 'ways', 'waycount', 'nations', 'board', 'boardinfo'].map((k) => `fw:d-${fid}:${k}`), `fw:d-${fid}:u:${who.userId}`];
     await Promise.all(fkeys.map((k) => redis.expire(k, 3600)));
@@ -65,7 +75,7 @@ export async function selfTest(): Promise<string> {
 
   const postId = await redis.hGet('fw:dayposts', String(day));
   let post = 'no post recorded for today';
-  if (postId && postId !== 'pending') {
+  if (postId && !isPending(postId)) {
     try {
       // Re-apply today's flair (the same text every time) and read it back, so each upload proves post flair works.
       const want = dayFlair(day).text;
@@ -98,5 +108,5 @@ export async function selfTest(): Promise<string> {
   const ms = Date.now() - t0;
   return problems.length
     ? `[selftest] FAIL day ${day}: ${problems.join('; ')} (${ms} ms)`
-    : `[selftest] ok day ${day} (${s.tier}): won way ${r.wayKey} on scratch day, ${res.ways.length} ways, forge round trip won, ${post}, pick: ${pick}, ${community} (${ms} ms)`;
+    : `[selftest] ok day ${day} (${s.tier}): won way ${r.wayKey} on scratch day, ${res.ways.length} ways, forge round trip won and deleted with its post, chalk claims hold, ${post}, pick: ${pick}, ${community} (${ms} ms)`;
 }

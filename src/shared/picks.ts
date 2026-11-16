@@ -36,7 +36,11 @@ export function choosePick(candidates: PickCandidate[], alreadyPicked: ReadonlyS
   return eligible[0] ?? null;
 }
 
-export function pickTitle(f: Pick<ForgedTrial, 'title' | 'author' | 'wayKeys'>): string {
+/**
+ * The pick's post title. It does not name the maker: a post title cannot be edited, so a name in it would outlive the
+ * maker deleting their account. The card inside the post credits them, from a record that expires.
+ */
+export function pickTitle(f: Pick<ForgedTrial, 'title' | 'wayKeys'>): string {
   const ways = f.wayKeys.length;
-  return `Foefall community pick: ${f.title || 'Untitled'} by u/${f.author} · ${ways} ${ways === 1 ? 'way' : 'ways'}`;
+  return `Foefall community pick: ${f.title || 'Untitled'} · ${ways} ${ways === 1 ? 'way' : 'ways'}`;
 }

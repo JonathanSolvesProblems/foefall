@@ -273,7 +273,8 @@ export function ResultSheet(p: ResultProps) {
   // Spoiler-free: the try count and the hunt, never the way itself.
   const share = () => {
     const what = p.data?.forge ? `u/${p.data.forge.author}'s Foefall trial` : `Foefall #${p.data?.day ?? ''}`;
-    const tries = me?.tries || 1;
+    // The try they first cleared on; tries keep counting while they hunt other ways.
+    const tries = me?.clearTry || me?.tries || 1;
     const hunt = community ? ` ${community.ways.length} of ${total} ways found so far.` : '';
     showShareSheet({ title: 'Foefall', text: `I cleared ${what} on try ${tries}.${hunt} Can you find another way?` }).catch(() => undefined);
   };
@@ -457,6 +458,7 @@ const emptyMe: Me = {
   nation: null,
   firstVisit: false,
   chalked: 0,
+  clearTry: 0,
 };
 
 export function HelpSheet(props: { onClose: () => void; puzzle: Puzzle }) {

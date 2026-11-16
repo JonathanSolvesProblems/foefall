@@ -3,7 +3,7 @@
 
 import type { AttemptResponse, BoardRow, Community, FoundWay, InitResponse, Me, Nation } from './api';
 import { NATION_LIST } from './api';
-import { TIERS, type TierId } from './engine/generator';
+import { EPOCH_UTC, TIERS, type TierId } from './engine/generator';
 import { type Action, playTurn, type Puzzle } from './engine/rules';
 
 export type SeasonDay = { day: number; date: string; tier: TierId; puzzle: Puzzle; wayKeys: string[]; winRatio: number };
@@ -13,6 +13,8 @@ export type KV = {
   hGetAll(key: string): Promise<Record<string, string>>;
   hSet(key: string, values: Record<string, string>): Promise<unknown>;
   hSetNX(key: string, field: string, value: string): Promise<number>;
+  hDel(key: string, fields: string[]): Promise<unknown>;
+  del(...keys: string[]): Promise<unknown>;
   hIncrBy(key: string, field: string, by: number): Promise<number>;
   zAdd(key: string, ...members: { member: string; score: number }[]): Promise<unknown>;
   zRange(key: string, start: number, stop: number, options?: { by: 'rank' }): Promise<{ member: string; score: number }[]>;
@@ -23,7 +25,7 @@ export type KV = {
 };
 
 /** A trial a redditor built and posted. Its play data lives under the pseudo day -id, so it never touches streaks. */
-export type ForgedTrial = { id: number; title: string; author: string; puzzle: Puzzle; wayKeys: string[] };
+export type ForgedTrial = { id: number; title: string; author: string; puzzle: Puzzle; wayKeys: string[]; created?: number | undefined };
 
 /**
  * Devvit Rules ask apps to remove a deleted account's data, and recommend deleting stored user data within 30 days.
@@ -31,6 +33,16 @@ export type ForgedTrial = { id: number; title: string; author: string; puzzle: P
  * last write. A player's own record renews while they keep playing.
  */
 export const RETENTION_SECONDS = 30 * 24 * 60 * 60;
+
+/**
+ * Seconds until a trial's shared records expire: its ways and their first finders, the board of first clears and the
+ * tallies. They hold other players' names, so the clock starts when the trial did (midnight UTC on its day, or when a
+ * redditor posted it) and later play never extends it. A write after that keeps its data for an hour, enough to show it.
+ */
+export function trialTtl(day: number, nowMs: number, forgeCreatedMs?: number): number {
+  const start = day > 0 ? EPOCH_UTC + (day - 1) * 86_400_000 : (forgeCreatedMs ?? nowMs);
+  return Math.max(3600, Math.floor((start + RETENTION_SECONDS * 1000 - nowMs) / 1000));
+}
 
 export type Who = { userId: string | undefined; username: string | undefined; avatar: string | undefined };
 
@@ -68,9 +80,9 @@ function parseWays(v: string | undefined): string[] {
 
 const isNation = (v: string | undefined): v is Nation => !!v && (NATION_LIST as readonly string[]).includes(v);
 
-async function loadMe(kv: KV, day: number, today: number, who: Who): Promise<Me> {
+async function loadMe(kv: KV, day: number, today: number, who: Who, postId?: string): Promise<Me> {
   if (!who.userId) {
-    return { username: null, tries: 0, solved: false, ways: [], streak: 0, best: 0, nation: null, firstVisit: true, chalked: 0 };
+    return { username: null, tries: 0, solved: false, ways: [], streak: 0, best: 0, nation: null, firstVisit: true, chalked: 0, clearTry: 0 };
   }
   const [u, du] = await Promise.all([kv.hGetAll(K.user(who.userId)), kv.hGetAll(K.dayUser(day, who.userId))]);
   const last = num(u.last);
@@ -84,17 +96,31 @@ async function loadMe(kv: KV, day: number, today: number, who: Who): Promise<Me>
     best: num(u.best),
     nation: isNation(u.nation) ? u.nation : null,
     firstVisit: u.seen !== '1',
-    chalked: num(du.chalked),
+    chalked: num(du[`chalked:${postId ?? ''}`]),
+    clearTry: num(du.clearTry),
   };
 }
 
 /**
- * Record a chalk mark. One per player per trial, plus one more each time they find another way, so the thread never
- * carries the same result twice. The field lives in the player's day record, which expires with it.
+ * Claim a chalk mark before posting it. One per player per post, plus one more each time they find another way, so a
+ * thread never carries the same result twice; a trial posted again (a community pick) has its own thread. The claim is
+ * atomic, so two taps or two tabs cannot both post. Release it if the comment fails. The fields live in the player's day
+ * record, which expires with it.
  */
-export async function markChalked(kv: KV, day: number, userId: string, ways: number): Promise<void> {
-  await kv.hSet(K.dayUser(day, userId), { chalked: String(ways) });
-  await kv.expire(K.dayUser(day, userId), RETENTION_SECONDS);
+export async function claimChalk(kv: KV, day: number, userId: string, postId: string, ways: number): Promise<boolean> {
+  const du = K.dayUser(day, userId);
+  const won = (await kv.hSetNX(du, `chalk:${postId}:${ways}`, '1')) === 1;
+  if (won) {
+    await kv.hSet(du, { [`chalked:${postId}`]: String(ways) });
+    await kv.expire(du, RETENTION_SECONDS);
+  }
+  return won;
+}
+
+export async function releaseChalk(kv: KV, day: number, userId: string, postId: string, ways: number, before: number): Promise<void> {
+  const du = K.dayUser(day, userId);
+  await kv.hDel(du, [`chalk:${postId}:${ways}`]);
+  await kv.hSet(du, { [`chalked:${postId}`]: String(before) });
 }
 
 async function loadCommunity(kv: KV, s: SeasonDay, myWays: string[]): Promise<Community> {
@@ -148,10 +174,10 @@ async function loadCommunity(kv: KV, s: SeasonDay, myWays: string[]): Promise<Co
 export async function loadInit(
   kv: KV,
   season: readonly SeasonDay[],
-  opts: { day: number; today: number; who: Who; subreddit: string; forge?: ForgedTrial | undefined }
+  opts: { day: number; today: number; who: Who; subreddit: string; forge?: ForgedTrial | undefined; postId?: string | undefined }
 ): Promise<InitResponse> {
   const { s, day } = resolveTrial(season, opts.day, opts.forge);
-  const me = await loadMe(kv, day, opts.today, opts.who);
+  const me = await loadMe(kv, day, opts.today, opts.who, opts.postId);
   const community = await loadCommunity(kv, { ...s, day }, me.ways);
   const tier = TIERS[s.tier];
   const f = opts.forge;
@@ -206,9 +232,12 @@ export async function recordAttempt(
 
   const day = opts.day;
   const du = K.dayUser(day, userId);
+  // The player's own records renew with their play; the trial's shared ones run out on the trial's own clock.
+  const shared = trialTtl(day, opts.nowMs, opts.forge?.created);
   const tries = await kv.hIncrBy(du, 'tries', 1);
   if (tries === 1) await kv.hIncrBy(K.stats(day), 'players', 1);
-  await Promise.all([du, K.stats(day)].map((k) => kv.expire(k, RETENTION_SECONDS)));
+  await kv.expire(du, RETENTION_SECONDS);
+  await kv.expire(K.stats(day), shared);
 
   let newForMe = false;
   let firstFinder = false;
@@ -224,7 +253,7 @@ export async function recordAttempt(
     const solvedBefore = (await kv.hGet(du, 'solved')) === '1';
     const u = await kv.hGetAll(K.user(userId));
     if (!solvedBefore) {
-      await kv.hSet(du, { solved: '1' });
+      await kv.hSet(du, { solved: '1', clearTry: String(tries) });
       await kv.hIncrBy(K.stats(day), 'solvers', 1);
       const secondsIntoDay = Math.floor((opts.nowMs % 86_400_000) / 1000);
       await kv.zAdd(K.board(day), { member: username, score: tries * 100_000 + secondsIntoDay });
@@ -244,8 +273,9 @@ export async function recordAttempt(
       }
     }
     await kv.hSet(K.boardInfo(day), { [username]: JSON.stringify({ avatar: avatar ?? null, ways: myWays.length }) });
-    const touched = [K.user(userId), K.ways(day), K.wayCount(day), K.nations(day), K.board(day), K.boardInfo(day)];
-    await Promise.all(touched.map((k) => kv.expire(k, RETENTION_SECONDS)));
+    await kv.expire(K.user(userId), RETENTION_SECONDS);
+    const touched = [K.ways(day), K.wayCount(day), K.nations(day), K.board(day), K.boardInfo(day)];
+    await Promise.all(touched.map((k) => kv.expire(k, shared)));
   }
 
   const me = await loadMe(kv, day, opts.today, opts.who);
@@ -267,25 +297,43 @@ const FK = {
   seq: 'fw:forge:seq',
   data: (id: number) => `fw:forge:${id}`,
   author: (id: number) => `fw:forge:${id}:author`,
+  post: (id: number) => `fw:forge:${id}:post`,
 };
 
 /** Store a forged trial and return its id. The author's name expires with other user data; the board stays. */
-export async function saveForge(kv: KV, f: Omit<ForgedTrial, 'id'>): Promise<number> {
+/**
+ * A trial a redditor built is their content: it expires with the retention window like everything else that came from
+ * a player, and it is deleted outright when they delete the post it went up in (see forgetForge).
+ */
+export async function saveForge(kv: KV, f: Omit<ForgedTrial, 'id'>, nowMs = Date.now()): Promise<number> {
   const id = await kv.incrBy(FK.seq, 1);
-  await kv.set(FK.data(id), JSON.stringify({ title: f.title, puzzle: f.puzzle, wayKeys: f.wayKeys }));
+  await kv.set(FK.data(id), JSON.stringify({ title: f.title, puzzle: f.puzzle, wayKeys: f.wayKeys, created: f.created ?? nowMs }));
   await kv.set(FK.author(id), f.author);
-  await kv.expire(FK.author(id), RETENTION_SECONDS);
+  await Promise.all([FK.data(id), FK.author(id)].map((k) => kv.expire(k, RETENTION_SECONDS)));
   return id;
+}
+
+/** Remember which post a trial first went up in, so deleting that post deletes the trial. */
+export async function setForgePost(kv: KV, id: number, postId: string): Promise<void> {
+  await kv.set(FK.post(id), postId);
+  await kv.expire(FK.post(id), RETENTION_SECONDS);
+}
+
+/** When its maker deletes the post a trial went up in, delete the trial too. A repost (a community pick) does not. */
+export async function forgetForge(kv: KV, id: number, deletedPostId: string): Promise<boolean> {
+  if ((await kv.get(FK.post(id))) !== deletedPostId) return false;
+  await kv.del(FK.data(id), FK.author(id), FK.post(id));
+  return true;
 }
 
 export async function loadForge(kv: KV, id: number): Promise<ForgedTrial | null> {
   const raw = await kv.get(FK.data(id));
   if (!raw) return null;
   try {
-    const v = JSON.parse(raw) as { title?: string; puzzle?: Puzzle; wayKeys?: string[] };
+    const v = JSON.parse(raw) as { title?: string; puzzle?: Puzzle; wayKeys?: string[]; created?: number };
     if (!v.puzzle || !Array.isArray(v.wayKeys)) return null;
     const author = (await kv.get(FK.author(id))) ?? 'a redditor';
-    return { id, title: v.title ?? '', author, puzzle: { ...v.puzzle, id: `f${id}` }, wayKeys: v.wayKeys };
+    return { id, title: v.title ?? '', author, puzzle: { ...v.puzzle, id: `f${id}` }, wayKeys: v.wayKeys, created: v.created };
   } catch {
     return null;
   }
@@ -334,6 +382,19 @@ export function memoryKV(): KV & { ttl: Map<string, number> } {
       if (m.has(f)) return 0;
       m.set(f, v);
       return 1;
+    },
+    hDel: async (k, fs) => {
+      for (const f of fs) h.get(k)?.delete(f);
+      return fs.length;
+    },
+    del: async (...ks) => {
+      for (const k of ks) {
+        h.delete(k);
+        z.delete(k);
+        strs.delete(k);
+        ttl.delete(k);
+      }
+      return ks.length;
     },
     hIncrBy: async (k, f, by) => {
       const m = hash(k);

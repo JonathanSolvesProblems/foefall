@@ -13,7 +13,7 @@ import {
   type OkResponse,
 } from '../../shared/api';
 import { cleanTitle, verifyForge } from '../../shared/forge';
-import { flairText, loadInit, markChalked, markSeen, recordAttempt, RETENTION_SECONDS, saveForge, setNation } from '../../shared/game';
+import { claimChalk, flairText, loadInit, markSeen, releaseChalk, setForgePost, recordAttempt, saveForge, setNation } from '../../shared/game';
 import { currentWho, kv, season, today, trialForPost } from '../core/context';
 import { recordForgePost } from '../core/picks';
 import { flairPost, PLAYER_FLAIR } from '../core/post';
@@ -24,7 +24,7 @@ const fail = (message: string): ErrorResponse => ({ type: 'error', message });
 
 async function init(): Promise<InitResponse> {
   const { day, forge } = await trialForPost();
-  const res = await loadInit(kv, season, { day, forge, today: today(), who: await currentWho(), subreddit: context.subredditName });
+  const res = await loadInit(kv, season, { day, forge, today: today(), who: await currentWho(), subreddit: context.subredditName, postId: context.postId });
   // A community pick post plays the same trial as the original; the splash says it was picked.
   if (res.forge && context.postData?.pick === true) res.forge = { ...res.forge, pick: true };
   return res;
@@ -101,23 +101,26 @@ api.post('/chalk', async (c) => {
   const data = await init();
   const me = data.me;
   if (!me.solved) return c.json<ErrorResponse>(fail('Clear the trial first.'), 400);
-  if (me.chalked >= me.ways.length) return c.json<ErrorResponse>(fail('Your chalk mark is already in the thread. Find another way to leave a new one.'), 409);
+  const already = () => c.json<ErrorResponse>(fail('Your chalk mark is already in the thread. Find another way to leave a new one.'), 409);
+  if (me.chalked >= me.ways.length) return already();
+  // Claimed before posting, atomically, so two taps or two tabs cannot both post the same result.
+  if (!(await claimChalk(kv, data.day, who.userId, context.postId, me.ways.length))) return already();
   const nation = me.nation ? `${NATIONS[me.nation].sigil} ${NATIONS[me.nation].short}` : '';
   const streak = me.streak > 1 && !data.forge ? ` · ${me.streak}-day streak` : '';
   // A player-built trial's title is user text, and its maker already hears about comments on their own post, so the
   // chalk mark neither quotes the title (no markdown or links from it) nor mentions the maker.
   const what = data.forge ? 'this trial' : `Foefall #${data.day} (${data.moon})`;
   const lines = [
-    `**u/${me.username}** cleared ${what} on try ${data.community.board.find((r) => r.name === me.username)?.tries ?? me.tries}${streak}${nation ? ` · ${nation}` : ''}.`,
+    `**u/${me.username}** cleared ${what} on try ${me.clearTry || me.tries}${streak}${nation ? ` · ${nation}` : ''}.`,
     '',
     `Found ${me.ways.length} of ${data.community.waysTotal} ways. The subreddit has found ${data.community.ways.length}.`,
   ];
   try {
     await reddit.submitComment({ id: context.postId, text: lines.join('\n'), runAs: 'USER' });
-    await markChalked(kv, data.day, who.userId, me.ways.length);
     return c.json<OkResponse>({ type: 'ok', message: 'Chalk mark left in the comments.' });
   } catch (e) {
     console.error('chalk failed', e);
+    await releaseChalk(kv, data.day, who.userId, context.postId, me.ways.length, me.chalked);
     return c.json<ErrorResponse>(fail('Could not post the comment.'), 500);
   }
 });
@@ -136,22 +139,22 @@ api.post('/subscribe', async (c) => {
 
 /**
  * Post a forged trial. The maker must have cleared it (the proof), the server re-checks the board with the solver, and
- * the post goes up as a new interactive post that plays the forged board. Three forges per player per day.
+ * the post goes up as a new interactive post that plays the forged board. Three posts per player per day, and twelve
+ * tries at posting (each runs the solver), so a client cannot make the server solve boards without limit.
  */
 api.post('/forge', async (c) => {
   const who = await currentWho();
   if (!who.userId || !who.username) return c.json<ErrorResponse>(fail('Log in to forge a trial.'), 401);
   const body = await c.req.json<ForgeRequest>().catch(() => null);
   if (!body) return c.json<ErrorResponse>(fail('Missing trial.'), 400);
-  const quotaKey = `fw:forgequota:${today()}:${who.userId}`;
-  const used = await kv.incrBy(quotaKey, 1);
-  await kv.expire(quotaKey, 2 * 86_400);
-  if (used > 3) return c.json<ErrorResponse>(fail('Three trials a day is the limit. Come back tomorrow.'), 429);
+  const postsKey = `fw:forgequota:${today()}:${who.userId}`;
+  const triesKey = `fw:forgetries:${today()}:${who.userId}`;
+  if (Number((await kv.get(postsKey)) ?? 0) >= 3) return c.json<ErrorResponse>(fail('Three trials a day is the limit. Come back tomorrow.'), 429);
+  const tries = await kv.incrBy(triesKey, 1);
+  await kv.expire(triesKey, 2 * 86_400);
+  if (tries > 12) return c.json<ErrorResponse>(fail('That is a lot of tries for one day. Come back tomorrow.'), 429);
   const verdict = verifyForge(body.puzzle, body.proof);
-  if ('error' in verdict) {
-    await kv.incrBy(quotaKey, -1);
-    return c.json<ErrorResponse>(fail(verdict.error), 400);
-  }
+  if ('error' in verdict) return c.json<ErrorResponse>(fail(verdict.error), 400);
   if (!verdict.check.ok) return c.json<ErrorResponse>(fail(verdict.check.reason), 400);
   const title = cleanTitle(body.title);
   const id = await saveForge(kv, { title, author: who.username, puzzle: verdict.puzzle, wayKeys: verdict.check.wayKeys });
@@ -169,8 +172,10 @@ api.post('/forge', async (c) => {
       },
     });
     await kv.set(`fw:post:${post.id}`, `forge:${id}`);
+    await setForgePost(kv, id, post.id);
     await recordForgePost(post.id);
-    await kv.expire(`fw:forge:${id}:author`, RETENTION_SECONDS);
+    await kv.incrBy(postsKey, 1);
+    await kv.expire(postsKey, 2 * 86_400);
     await flairPost(post.id, PLAYER_FLAIR);
     return c.json<ForgeResponse>({ type: 'forge', id, postId: post.id, url: `https://reddit.com/r/${context.subredditName}/comments/${post.id.replace(/^t3_/, '')}` });
   } catch (e) {

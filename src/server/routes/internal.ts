@@ -1,7 +1,8 @@
 import { Hono } from 'hono';
 import type { TriggerResponse, UiResponse } from '@devvit/web/shared';
 import { context, redis } from '@devvit/web/server';
-import { today } from '../core/context';
+import { forgetForge } from '../../shared/game';
+import { kv, today } from '../core/context';
 import { forgetForgePost, postCommunityPick } from '../core/picks';
 import { postDay } from '../core/post';
 import { selfTest } from '../core/selftest';
@@ -61,11 +62,14 @@ internal.post('/triggers/on-post-delete', async (c) => {
     const body = await c.req.json<{ postId?: string; post?: { id?: string } }>().catch(() => ({}) as { postId?: string; post?: { id?: string } });
     const postId = body.postId ?? body.post?.id;
     if (postId) {
-      const day = await redis.get(`fw:post:${postId}`);
+      const mapped = await redis.get(`fw:post:${postId}`);
       await redis.del(`fw:post:${postId}`);
       await forgetForgePost(postId);
-      if (day && (await redis.hGet('fw:dayposts', day)) === postId) await redis.hDel('fw:dayposts', [day]);
-      console.log(`post ${postId} deleted; mapping for day ${day ?? '?'} removed`);
+      // A player-built trial is its maker's content: deleting the post it first went up in deletes it.
+      const forgeId = Number(mapped?.replace(/^forge:/, ''));
+      const trialGone = mapped?.startsWith('forge:') && forgeId > 0 ? await forgetForge(kv, forgeId, postId) : false;
+      if (mapped && !mapped.startsWith('forge:') && (await redis.hGet('fw:dayposts', mapped)) === postId) await redis.hDel('fw:dayposts', [mapped]);
+      console.log(`post ${postId} deleted; mapping ${mapped ?? '?'} removed${trialGone ? ', player trial deleted' : ''}`);
     }
   } catch (e) {
     console.error('post delete cleanup failed', e);
@@ -76,6 +80,7 @@ internal.post('/triggers/on-post-delete', async (c) => {
 internal.post('/menu/post-today', async (c) => {
   try {
     const r = await postDay();
+    if (!r.id) return c.json<UiResponse>({ showToast: 'Today’s trial is being posted right now. Look again in a minute.' }, 200);
     return c.json<UiResponse>(
       r.created ? { navigateTo: link(r.id) } : { showToast: 'Today’s trial is already posted.', navigateTo: link(r.id) },
       200

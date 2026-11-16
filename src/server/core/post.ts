@@ -37,17 +37,36 @@ export async function flairPost(postId: string, flair: Flair): Promise<boolean> 
   }
 }
 
+/** A claim is "pending:<ms>" while its post is being made. One older than this was left by a crash and is taken over. */
+const CLAIM_STALE_MS = 120_000;
+export const isPending = (v: string | undefined): boolean => !!v && v.startsWith('pending');
+const isFreshClaim = (v: string, nowMs: number) => nowMs - Number(v.split(':')[1] ?? 0) < CLAIM_STALE_MS;
+
 /**
- * Post the trial for a day, once. A Redis claim keeps the scheduler, the install trigger and the mod menu from posting
- * the same day twice. Returns the post id, existing or new.
+ * Claim a field before posting, so the scheduler, the triggers and the mod menu never post the same thing twice even
+ * when they overlap. Returns the existing post id, '' when another caller is posting it right now, or null when the
+ * caller holds the claim and should post.
+ */
+export async function claimPost(key: string, field: string, nowMs = Date.now()): Promise<string | null> {
+  if ((await redis.hSetNX(key, field, `pending:${nowMs}`)) === 1) return null;
+  const cur = await redis.hGet(key, field);
+  if (cur && !isPending(cur)) return cur;
+  if (cur && isFreshClaim(cur, nowMs)) return '';
+  await redis.hSet(key, { [field]: `pending:${nowMs}` });
+  return null;
+}
+
+/**
+ * Post the trial for a day, once. Returns the post id, existing or new; the id is '' when another caller is posting it
+ * at this moment.
  */
 export async function postDay(day: number = today(), force = false): Promise<{ id: string; created: boolean }> {
   const claimKey = 'fw:dayposts';
   const existing = await redis.hGet(claimKey, String(day));
-  if (existing && existing !== 'pending' && !force) return { id: existing, created: false };
-  if (!force && (await redis.hSetNX(claimKey, String(day), 'pending')) === 0) {
-    const now = await redis.hGet(claimKey, String(day));
-    if (now && now !== 'pending') return { id: now, created: false };
+  if (existing && !isPending(existing) && !force) return { id: existing, created: false };
+  if (!force) {
+    const held = await claimPost(claimKey, String(day));
+    if (held !== null) return { id: held, created: false };
   }
   const s = trialFor(season, day);
   const tier = TIERS[s.tier];

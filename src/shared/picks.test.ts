@@ -36,8 +36,8 @@ describe('isSunday', () => {
 });
 
 describe('pickTitle', () => {
-  it('credits the maker and counts the ways', () => {
-    expect(pickTitle({ title: 'The Lantern Gate', author: 'ana', wayKeys: ['a', 'b'] })).toBe('Foefall community pick: The Lantern Gate by u/ana · 2 ways');
-    expect(pickTitle({ title: '', author: 'bo', wayKeys: ['a'] })).toBe('Foefall community pick: Untitled by u/bo · 1 way');
+  it('names the trial and counts the ways, without the maker’s name', () => {
+    expect(pickTitle({ title: 'The Lantern Gate', wayKeys: ['a', 'b'] })).toBe('Foefall community pick: The Lantern Gate · 2 ways');
+    expect(pickTitle({ title: '', wayKeys: ['a'] })).toBe('Foefall community pick: Untitled · 1 way');
   });
 });
