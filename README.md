@@ -6,6 +6,8 @@ Foefall is a daily tactics puzzle for Reddit, set in the world of [Orvandel](htt
 
 Most trials can be won more than one way, and the subreddit hunts for all of them together. The first redditor to find each way gets their name on it.
 
+**Play it:** [r/Foefall](https://www.reddit.com/r/Foefall/). Open the newest post and tap Begin. It plays inside the post, on mobile or desktop, with no account needed to play (an account saves your streak and puts your name on the ways you find).
+
 It is a port: Foefall takes Orvandel's world, its four nations, its hero classes, its creatures and its signature mechanic (big attacks marked on the ground before they land) and turns them into a bite-sized daily game built for Reddit.
 
 ## How to run it
@@ -62,7 +64,7 @@ First-time players get a one-move warm-up with hints before the day's trial.
 - **Community pick.** Every Sunday the scheduler posts the week's best-liked player-built trial again as the community pick, with its own flair, so the subreddit's best work reaches everyone who missed it. It needs at least one upvote beyond the maker's own, and no trial is picked twice. Mods can also post it from the subreddit menu.
 - **A nudge when stuck.** After three failed tries, the loss card offers to show a first step: one hero's opening move from a way you have not found yet, marked on the board and named in words. It is worked out by the same solver in your browser, and it disappears once that hero has acted.
 - **The hunt.** Each trial has a known number of ways to win. The post shows how many the subreddit has found, and each found way carries the name and avatar of the first redditor who found it. Unfound ways stay locked.
-- **Chalk marks.** After a clear, one button leaves your result as a comment in the day's thread (try count, ways found, streak, nation). The way itself is never spelled out, so the thread stays spoiler-free.
+- **Chalk marks.** After a clear, one button leaves your result in the day's thread (try count, ways found, streak, nation), posted as you, as a reply under the post's one stickied comment, which is the pattern Reddit's user-actions guide asks for. One per post, plus one more each time you find another way. The way itself is never spelled out, so the thread stays spoiler-free.
 - **Nations and flair.** Pick one of Orvandel's four nations after your first clear. Your nation and streak become your user flair, and every clear adds to your nation's tally for the day.
 - **Streaks.** A streak counts consecutive days you cleared that day's trial.
 - **First to clear.** Each post has a leaderboard of the day's first clears, by tries.
