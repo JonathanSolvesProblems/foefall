@@ -1,5 +1,8 @@
 import { navigateTo, showLoginPrompt, showShareSheet } from '@devvit/web/client';
 import { untilNextTrial } from '../lib/time';
+
+/** The in-game Join prompt. Off until judging ends (see the win card). */
+const JOIN_PROMPT = false;
 import { useState } from 'react';
 import {
   type AttemptResponse,
@@ -385,7 +388,9 @@ export function ResultSheet(p: ResultProps) {
           )}
         </div>
         <div className="row" style={{ marginTop: 8 }}>
-          {p.server?.saved && (
+          {/* Join is off until judging: the demo subreddit must stay under 200 members, and this button was the main
+              way players joined from inside the game. Set JOIN_PROMPT to true after the event. */}
+          {JOIN_PROMPT && p.server?.saved && (
             <button className="btn" disabled={p.busy || p.joined} onClick={p.onJoin}>
               {p.joined ? `Joined r/${sub}` : `Join r/${sub}`}
             </button>
