@@ -78,6 +78,7 @@ function Play(props: {
     if (!played) return;
     journey.start();
     journey.interaction('strike', `${t.actions.length}`);
+    setIntro(false); // the opening line has done its job once a turn is played
     setFx({
       attacking: new Set(played.events.map((e) => e.attacker)),
       hitting: new Set(played.events.flatMap((e) => e.hits)),
