@@ -43,7 +43,7 @@ const SLIDES: Slide[] = [
     sub: 'Make them strike each other. A new Foefall trial goes up in the subreddit every day, and plays inside the post.',
     caption: "Foefall in the Reddit app: today's trial drawn in the post, with its moon and how many of its ways the subreddit has found.",
     kind: 'phone',
-    images: [{ file: `${PHONE}/shot-57-card2.png`, badge: 'Reddit app, Galaxy S24', crop: APP }],
+    images: [{ file: `${PHONE}/shot-f01-card.png`, badge: 'r/Foefall, Reddit app', crop: APP }],
   },
   {
     name: 'port',
@@ -54,16 +54,16 @@ const SLIDES: Slide[] = [
     images: [
       // The fight itself: the Duskfield Wolf, the Vanguard and the ring marked on the ground.
       { file: ORVANDEL, badge: 'Orvandel, my browser MMO', rect: { x: 560, y: 300, w: 860, h: 620 } },
-      { file: `${PHONE}/shot-62-ready-signedin.png`, badge: 'Foefall, Reddit app', crop: APP },
+      { file: `${PHONE}/shot-f04-daily.png`, badge: 'Foefall, r/Foefall', crop: APP },
     ],
   },
   {
     name: 'forecast',
     headline: 'The forecast reads every tap',
     sub: 'Red tiles are this turn’s strikes. Before you commit, it says how many monsters fall, who gets hit, and whether the lamp survives.',
-    caption: 'Every red tile is a strike that will land. The forecast updates on each tap: 0 of 4 monsters fall, 1 hero struck, lamp goes out.',
+    caption: 'Every red tile is a strike that will land. The forecast updates on each tap: 2 of 4 monsters fall, 1 hero struck, lamp goes out.',
     kind: 'phone',
-    images: [{ file: `${PHONE}/shot-62-ready-signedin.png`, badge: 'Reddit app, Galaxy S24', crop: APP }],
+    images: [{ file: `${PHONE}/shot-f06-mid.png`, badge: 'r/Foefall, Reddit app', crop: APP }],
   },
   {
     name: 'strike',
@@ -71,7 +71,7 @@ const SLIDES: Slide[] = [
     sub: 'Shove, hurl, drag, swap or drop a star until every strike lands on a monster. Undo is free; only Strike counts as a try.',
     caption: 'Every strike lands true: all four monsters will fall, both heroes are safe and the lamp stays lit. Only Strike counts as a try.',
     kind: 'phone',
-    images: [{ file: `${PHONE}/shot-63-ready-signedin.png`, badge: 'Reddit app, Galaxy S24', crop: APP }],
+    images: [{ file: `${PHONE}/shot-f07-ready.png`, badge: 'r/Foefall, Reddit app', crop: APP }],
   },
   {
     name: 'first',
@@ -79,15 +79,15 @@ const SLIDES: Slide[] = [
     sub: 'Most trials can be won more than one way. The first redditor to find each way gets their name and avatar on it.',
     caption: 'A clear on Reddit: nobody had found this way, so it carries the player’s name. The card names every strike that felled a monster.',
     kind: 'phone',
-    images: [{ file: `${PHONE}/shot-64-win-signedin.png`, badge: 'Reddit app, Galaxy S24', crop: APP }],
+    images: [{ file: `${PHONE}/shot-f09-win.png`, badge: 'r/Foefall, Reddit app', crop: APP }],
   },
   {
     name: 'hunt',
     headline: 'The subreddit hunts every way',
     sub: 'The ways found so far and who found each first, Orvandel’s four nations to fight for, the trial builder and today’s first clears.',
-    caption: 'After a clear: the hunt with each way’s first finder, the four nations’ tally and today’s first clears. Test players, local build.',
+    caption: 'After a clear on r/Foefall: the hunt with each way’s first finder, Orvandel’s four nations, the trial builder and today’s first clears.',
     kind: 'phone',
-    images: [{ file: 'tools/shots/phone-11-daily-win-scrolled.png', badge: 'Local preview, test players' }],
+    images: [{ file: `${PHONE}/shot-f10-nations.png`, badge: 'r/Foefall, Reddit app', crop: APP }],
   },
   {
     name: 'builder',
